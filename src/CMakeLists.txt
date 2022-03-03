@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 project(lidar_ros_driver VERSION 1.0 LANGUAGES CXX)
 
@@ -8,15 +8,22 @@ set(CXX_STD cxx_std_17)
 
 add_subdirectory(common_msgs)
 
-find_package(catkin REQUIRED COMPONENTS
-  message_generation
-  roscpp
-  sensor_msgs
-  std_msgs
-  message_generation
-  common_msgs
-  rosbag
-)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(message_generation REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(common_msgs REQUIRED)
+find_package(rosbag REQUIRED)
+#find_package(catkin REQUIRED COMPONENTS
+ # message_generation
+  #roscpp
+  #sensor_msgs
+  #std_msgs
+  #message_generation
+  #common_msgs
+  #rosbag
+# )
 
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
@@ -27,11 +34,15 @@ add_subdirectory(external)
 ###################################
 ## catkin specific configuration ##
 ###################################
-catkin_package(
+# catkin_package(
+#   LIBRARIES ${PROJECT_NAME}
+#   CATKIN_DEPENDS roscpp std_msgs sensor_msgs message_runtime common_msgs rosbag
+ament_package(
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS roscpp std_msgs sensor_msgs message_runtime common_msgs rosbag
-#  DEPENDS
+  AMENT_DEPENDS rclcpp std_msgs sensor_msgs message_runtime common_msgs rosbag
 )
+#  DEPENDS
+
 
 set(PARAMETER_FLAG_INCLUDE "${CMAKE_SOURCE_DIR}/lidar_ros_driver")
 
@@ -39,10 +50,16 @@ set(PARAMETER_FLAG_INCLUDE "${CMAKE_SOURCE_DIR}/lidar_ros_driver")
 ## Build ##
 ###########
 include_directories(
-  ${catkin_INCLUDE_DIRS}
+  # ${catkin_INCLUDE_DIRS}
   ${CPPBASE_INCLUDE_DIR}
   ${PARAMETER_FLAG_INCLUDE}
 )
+ament_target_dependencies(lidar_ros_driver 
+   rclcpp
+   std_msgs
+   message_runtime
+   common_msgs
+   rosbag)
 
 add_subdirectory(lidar_ros_driver)
 add_subdirectory(test_node)

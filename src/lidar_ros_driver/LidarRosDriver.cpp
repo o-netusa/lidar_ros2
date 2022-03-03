@@ -19,12 +19,14 @@
 #include <common_msgs/LidarRosService.h>
 #include <common_msgs/ParameterMsg.h>
 #include <config/DeviceParamsConfig.h>
-#include <ros/ros.h>
+//#include <ros/ros.h>
+#incldue <rclcpp/rclcpp.hpp>
 #include <rosbag/bag.h>
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud_conversion.h>
-#include <std_msgs/String.h>
+//#include <std_msgs/String.h>
+#include <std_msgs/msg/string.hpp>
 
 #include <thread>
 
@@ -63,10 +65,14 @@ struct LidarRosDriver::Impl
     bool m_save_bag{false};
     std::string m_update_parameter;
     rosbag::Bag m_bag;
-    ros::NodeHandle m_node;        //节点
-    ros::Publisher m_cloud_pub;    //点云发布者
-    ros::Publisher m_param_pub;    //参数设置状态发布者
-    ros::ServiceServer m_service;  // connect参数设置状态
+    // ros::NodeHandle m_node;        //节点
+    // ros::Publisher m_cloud_pub;    //点云发布者
+    // ros::Publisher m_param_pub;    //参数设置状态发布者
+    // ros::ServiceServer m_service;  // connect参数设置状态
+    rclcpp::Node m_node;        //节点
+    rclcpp::Publisher m_cloud_pub;    //点云发布者
+    rclcpp::Publisher m_param_pub;    //参数设置状态发布者
+    //rclcpp::ServiceServer m_service;  // connect参数设置状态
 
     std::string m_point_cloud_topic_name{"lidar_point_cloud"};
     std::string m_frame_id{"lidar"};
@@ -90,7 +96,8 @@ struct LidarRosDriver::Impl
     lidar::PlaybackDevice *m_playback_device{nullptr};
     std::shared_ptr<onet::lidar::DlphDeviceParameter> m_dev_param;
 
-    void InitLidar(ros::NodeHandle node)
+    //void InitLidar(ros::NodeHandle node)
+    void InitLidar(rclcpp::Node node)
     {
         near_noise_dist =
             node.param<int>("/onet_lidar_ros_driver/near_noise_dist", near_noise_dist);
@@ -113,7 +120,8 @@ struct LidarRosDriver::Impl
             "/onet_lidar_ros_driver/playback_file_path", m_playback_file_path);
     }
 
-    Impl(ros::NodeHandle node) : m_node(node)
+    //Impl(ros::NodeHandle node) : m_node(node)
+    Impl(rclcpp::Node node) : m_node(node)
     {
         try
         {
@@ -124,10 +132,14 @@ struct LidarRosDriver::Impl
         {
             ROS_ERROR("Error fetching parameters: %s", e.what());
         }
-        m_cloud_pub = m_node.advertise<sensor_msgs::PointCloud2>(m_point_cloud_topic_name, 100);
-        m_param_pub = m_node.advertise<common_msgs::ParameterMsg>(param_msgs, 100);
-        m_service = m_node.advertiseService(service_param_flag,
-                                            &LidarRosDriver::Impl::HandlerServiceRequest, this);
+        // m_cloud_pub = m_node.advertise<sensor_msgs::PointCloud2>(m_point_cloud_topic_name, 100);
+        // m_param_pub = m_node.advertise<common_msgs::ParameterMsg>(param_msgs, 100);
+        // m_service = m_node.advertiseService(service_param_flag,
+        //                                     &LidarRosDriver::Impl::HandlerServiceRequest, this);
+        m_cloud_pub = m_node->create_publisher<sensor_msg::PointCloud2>(m_point_cloud_topic_name, 100);
+        m_param_pub = m_node->create_publisher<common_msgs::ParameterMsg>(param_msgs, 100);
+        // m_service = m_node->create_publisher(service_param_flag,
+        //                                     &LidarRosDriver::Impl::HandlerServiceRequest, this);
         m_callback = [this](uint32_t frame_id, lidar::PointCloud<lidar::PointXYZI> &cloud) {
             HandlePointCloud(frame_id, cloud);
         };
@@ -145,12 +157,14 @@ struct LidarRosDriver::Impl
     {
         if (m_lidar_device)
         {
-            ROS_INFO("Stop lidar device");
+            //ROS_INFO("Stop lidar device");
+            RCLCPP_INFO(m_node->get_logger(),"Stop lidar device");
             m_lidar_device->Stop();
         }
         if (m_playback_device)
         {
-            ROS_INFO("Stop playback device");
+            //ROS_INFO("Stop playback device");
+            RCLCPP_INFO(m_node->get_logger(),"Stop playback device");
             m_playback_device->Stop();
         }
         if (m_save_bag)
@@ -181,7 +195,8 @@ struct LidarRosDriver::Impl
             pointcloud.points[i].z = pt[2];
             pointcloud.channels[0].values[i] = pt[3];
         }
-        ROS_INFO("end time:%d us", static_cast<int>(timer.Elapsed()));
+        //ROS_INFO("end time:%d us", static_cast<int>(timer.Elapsed()));
+        RCLCPP_INFO(m_node->get_logger(),"end time:%d us", static_cast<int>(timer.Elapsed()));
         timer.Stop();
         // convert pointcloud to pointcloud2
         sensor_msgs::PointCloud2 pointcloud2;
@@ -198,8 +213,10 @@ struct LidarRosDriver::Impl
      */
     void Run()
     {
-        ROS_INFO("Current directory: %s", fs::current_path().string().c_str());
-        ROS_INFO("Playback file path: %s", m_playback_file_path.c_str());
+        //ROS_INFO("Current directory: %s", fs::current_path().string().c_str());
+        //ROS_INFO("Playback file path: %s", m_playback_file_path.c_str());
+        RCLCPP_INFO(m_node->get_logger(),"Current directory: %s", fs::current_path().string().c_str());
+        RCLCPP_INFO(m_node->get_logger(),"Playback file path: %s", m_playback_file_path.c_str());
         // Use PlaybackDevice if playback_file_path is not empty
         if (!m_playback_file_path.empty())
         {
@@ -301,7 +318,8 @@ struct LidarRosDriver::Impl
     bool HandlerServiceRequest(common_msgs::LidarRosService::Request &req,
                                common_msgs::LidarRosService::Response &res)
     {
-        ROS_INFO("Type: %s", req.type.c_str());
+        //ROS_INFO("Type: %s", req.type.c_str());
+        RCLCPP_INFO(m_node->get_logger(),"Type: %s", req.type.c_str());
         if (req.type == init_device_flag)
         {
             return InitDevice(req, res);
@@ -473,7 +491,8 @@ struct LidarRosDriver::Impl
             {
                 ip = static_cast<std::string>(connect_xml["ip"]);
                 port = static_cast<int>(connect_xml["port"]);
-                ROS_INFO("ip:%s port:%d\n", ip.c_str(), port);
+                //ROS_INFO("ip:%s port:%d\n", ip.c_str(), port);
+                RCLCPP_INFO(m_node->get_logger(),"ip:%s port:%d\n", ip.c_str(), port);
                 state = true;
             }
         } catch (ros::Exception &e)
@@ -514,7 +533,8 @@ struct LidarRosDriver::Impl
                 laserparam.level = static_cast<int>(laserparam_xml["level"]);
                 laserparam.factor = static_cast<int>(laserparam_xml["factor"]);
                 laserparam.pulse_width = static_cast<int>(laserparam_xml["pulse_width"]);
-                ROS_INFO("level:%d factor:%d pulse_width:%d.", laserparam.level, laserparam.factor,
+                //ROS_INFO("level:%d factor:%d pulse_width:%d.", laserparam.level, laserparam.factor,
+                RCLCPP_INFO(m_node->get_logger(),"level:%d factor:%d pulse_width:%d.", laserparam.level, laserparam.factor,
                          laserparam.pulse_width);
                 state = true;
             }
@@ -545,7 +565,8 @@ struct LidarRosDriver::Impl
         int echo_number;
         if (m_node.getParam(echo_number_flag, echo_number))
         {
-            ROS_INFO("echo_number:%d.", echo_number);
+            //ROS_INFO("echo_number:%d.", echo_number);
+            RCLCPP_INFO(m_node->get_logger(),"echo_number:%d.", echo_number);
             state = true;
             try
             {
@@ -570,7 +591,8 @@ struct LidarRosDriver::Impl
             int32_t type;
             if (m_node.getParam(raw_data_type_flag, type))
             {
-                ROS_INFO("raw_data_type:%d.", type);
+                //ROS_INFO("raw_data_type:%d.", type);
+                RCLCPP_INFO(m_node->get_logger(),"raw_data_type:%d.", type);
                 state = true;
                 m_lidar_device->SetRawDataType((RawDataType)type);
                 SendParameterState(raw_data_type_flag, true, "");
@@ -593,7 +615,8 @@ struct LidarRosDriver::Impl
             int mode;
             if (m_node.getParam(scan_mode_flag, mode))
             {
-                ROS_INFO("scan_mode:%d.", mode);
+                //ROS_INFO("scan_mode:%d.", mode);
+                RCLCPP_INFO(m_node->get_logger(),"scan_mode:%d.", mode);
                 state = true;
                 m_lidar_device->SetScanMode((ScanMode)mode);
                 SendParameterState(scan_mode_flag, true, "");
@@ -629,7 +652,8 @@ struct LidarRosDriver::Impl
                 viewparam.perspectives[2] = static_cast<double>(viewparam_xml["perspectives"][2]);
                 viewparam.perspectives[3] = static_cast<double>(viewparam_xml["perspectives"][3]);
                 viewparam.perspectives[4] = static_cast<double>(viewparam_xml["perspectives"][4]);
-                ROS_INFO("frame:%d steps:{%d,%d,%d,%d} perspectives:{%f,%f,%f,%f,%f}",
+                //ROS_INFO("frame:%d steps:{%d,%d,%d,%d} perspectives:{%f,%f,%f,%f,%f}",
+                RCLCPP_INFO(m_node->get_logger(),"frame:%d steps:{%d,%d,%d,%d} perspectives:{%f,%f,%f,%f,%f}",
                          viewparam.frame, viewparam.steps[0], viewparam.steps[1],
                          viewparam.steps[2], viewparam.steps[3], viewparam.perspectives[0],
                          viewparam.perspectives[1], viewparam.perspectives[2],
@@ -690,7 +714,8 @@ struct LidarRosDriver::Impl
                 bool saveable = static_cast<bool>(option_xml["savable"]);
                 int rule = static_cast<int>(option_xml["folder_rule"]);
                 std::string path = static_cast<std::string>(option_xml["path"]);
-                ROS_INFO("savable:%d folder_rule:%d path:%s.", saveable, rule, path.c_str());
+                //ROS_INFO("savable:%d folder_rule:%d path:%s.", saveable, rule, path.c_str());
+                RCLCPP_INFO(m_node->get_logger(),"savable:%d folder_rule:%d path:%s.", saveable, rule, path.c_str());
                 onet::lidar::RawDataSavingConfig config(
                     saveable, (lidar::RawDataSavingConfig::FolderRule)rule, path);
 
@@ -763,7 +788,8 @@ struct LidarRosDriver::Impl
                 }
             } while (!state && retry-- > 0);
 
-            ROS_INFO("delete parameter:%s %d %d", m_update_parameter.c_str(), state, retry);
+            //ROS_INFO("delete parameter:%s %d %d", m_update_parameter.c_str(), state, retry);
+             RCLCPP_INFO(m_node->get_logger(),"delete parameter:%s %d %d", m_update_parameter.c_str(), state, retry));
             m_node.deleteParam(m_update_parameter);
             //判断update_param参数里数据是否更新为新设置参数,更新就不删除update_param本参数
             std::string update_parameter_temp;
@@ -792,7 +818,8 @@ struct LidarRosDriver::Impl
     }
 };
 
-LidarRosDriver::LidarRosDriver(ros::NodeHandle node)
+//LidarRosDriver::LidarRosDriver(ros::NodeHandle node)
+LidarRosDriver::LidarRosDriver(rclcpp::Node node)
     : m_impl(std::make_shared<LidarRosDriver::Impl>(node))
 {}
 
