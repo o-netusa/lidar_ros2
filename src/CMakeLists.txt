@@ -10,11 +10,10 @@ add_subdirectory(common_msgs)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(message_generation REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(common_msgs REQUIRED)
-find_package(rosbag REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+#find_package(rosbag REQUIRED)
 #find_package(catkin REQUIRED COMPONENTS
  # message_generation
   #roscpp
@@ -37,11 +36,11 @@ add_subdirectory(external)
 # catkin_package(
 #   LIBRARIES ${PROJECT_NAME}
 #   CATKIN_DEPENDS roscpp std_msgs sensor_msgs message_runtime common_msgs rosbag
-ament_package(
-  LIBRARIES ${PROJECT_NAME}
-  AMENT_DEPENDS rclcpp std_msgs sensor_msgs message_runtime common_msgs rosbag
-)
+
 #  DEPENDS
+
+ament_export_dependencies(rosidl_default_runtime)
+
 
 
 set(PARAMETER_FLAG_INCLUDE "${CMAKE_SOURCE_DIR}/lidar_ros_driver")
@@ -51,15 +50,10 @@ set(PARAMETER_FLAG_INCLUDE "${CMAKE_SOURCE_DIR}/lidar_ros_driver")
 ###########
 include_directories(
   # ${catkin_INCLUDE_DIRS}
+  ${colcon_INCLUDE_DIRS}
   ${CPPBASE_INCLUDE_DIR}
   ${PARAMETER_FLAG_INCLUDE}
 )
-ament_target_dependencies(lidar_ros_driver 
-   rclcpp
-   std_msgs
-   message_runtime
-   common_msgs
-   rosbag)
 
 add_subdirectory(lidar_ros_driver)
 add_subdirectory(test_node)
@@ -83,3 +77,5 @@ set(CPACK_PACKAGE_VENDOR "ONET")
 
 include(ClangFormat)
 clang_format_recurse("lidar_ros_driver" "test_node" "tests")
+
+ament_package()
