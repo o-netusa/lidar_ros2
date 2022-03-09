@@ -7,20 +7,24 @@
  *************************************************************************/
 
 #include "LidarRosDriver.h"
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/string.hpp"
 
-#include <DeviceManager.h>
-#include <DolphinDevice.h>
 #include <LidarDevice.h>
 #include <PlaybackDevice.h>
-#include <Types.h>
-#include <XmlRpcValue.h>
-#include <common/FileSystem.h>
-#include <common/Timer.h>
-#include <common_msgs/LidarRosService.h>
-#include <common_msgs/ParameterMsg.h>
+#include <DeviceManager.h>
+#include <DolphinDevice.h>
+// #include <Types.h>
+// #include <XmlRpcValue.h>
+// #include <common/FileSystem.h>
+// #include <common/Timer.h>
+// #include <common_msgs/LidarRosService.h>
+// #include <common_msgs/ParameterMsg.h>
+#include <common_msgs/srv/lidar_ros_service.h>
+#include "common_msgs/msg/parameter_msg.h"
 #include <config/DeviceParamsConfig.h>
 //#include <ros/ros.h>
-#incldue <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 #include <rosbag/bag.h>
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/PointCloud2.h>

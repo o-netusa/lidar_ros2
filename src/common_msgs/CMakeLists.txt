@@ -15,7 +15,7 @@ endif()
 # )
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-#find_package(std_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
@@ -23,15 +23,13 @@ find_package(rosidl_default_generators REQUIRED)
 #    FILES
 #    ParameterMsg.msg
 #  )sor 
-set(msg_files
-  msg/ParameterMsg.msg)
+set(msg_files "msg/ParameterMsg.msg")
 # add_service_files(
 #     DIRECTORY srv
 #     FILES
 #     LidarRosService.srv
 #     )
-set(srv_file 
-  "srv/LidarRosService.srv")
+set(srv_file "srv/LidarRosService.srv")
 # generate_messages(
 #     DEPENDENCIES
 #       std_msgs
@@ -39,7 +37,8 @@ set(srv_file
 rosidl_generate_interfaces(${PROJECT_NAME}
         ${msg_files}
         ${srv_file}
-        DEPENDENCIES builtin_interfaces std_msgs rclcpp)
+        DEPENDENCIES builtin_interfaces)
+
 # catkin_package(
 #   CATKIN_DEPENDS message_runtime
 # )
@@ -48,9 +47,13 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 # include_directories(
 #   # ${catkin_INCLUDE_DIRS}
 #   )
-ament_export_dependencies(rosidl_default_generators)
+
+# include_directories(include)
 ament_export_dependencies(rosidl_default_runtime)
-ament_export_include_directories(include)
+
+ament_export_dependencies(rosidl_default_generators)
+
+ament_export_include_directories(rosidl_default_generators)
 
 ament_package()
 

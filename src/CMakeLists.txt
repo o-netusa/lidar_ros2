@@ -6,13 +6,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CXX_STD cxx_std_17)
 
-add_subdirectory(common_msgs)
-
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(builtin_interfaces REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
 #find_package(rosbag REQUIRED)
 #find_package(catkin REQUIRED COMPONENTS
  # message_generation
@@ -24,11 +17,19 @@ find_package(rosidl_default_generators REQUIRED)
   #rosbag
 # )
 
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
 include(DownloadProject)
 add_subdirectory(external)
+
+add_subdirectory(common_msgs)
+
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+# find_package(common_msgs REQUIRED)
+
+
 
 ###################################
 ## catkin specific configuration ##
@@ -39,24 +40,23 @@ add_subdirectory(external)
 
 #  DEPENDS
 
-ament_export_dependencies(rosidl_default_runtime)
-
-
 
 set(PARAMETER_FLAG_INCLUDE "${CMAKE_SOURCE_DIR}/lidar_ros_driver")
+
 
 ###########
 ## Build ##
 ###########
 include_directories(
   # ${catkin_INCLUDE_DIRS}
-  ${colcon_INCLUDE_DIRS}
   ${CPPBASE_INCLUDE_DIR}
   ${PARAMETER_FLAG_INCLUDE}
 )
 
 add_subdirectory(lidar_ros_driver)
-add_subdirectory(test_node)
+# add_subdirectory(test_node)
+
+ament_package()
 
 #############
 ## Testing ##
@@ -78,4 +78,4 @@ set(CPACK_PACKAGE_VENDOR "ONET")
 include(ClangFormat)
 clang_format_recurse("lidar_ros_driver" "test_node" "tests")
 
-ament_package()
+
