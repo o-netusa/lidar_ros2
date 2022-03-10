@@ -28,10 +28,10 @@ nightly_linux:
     - ssh-keyscan -t rsa -p 2222 192.168.10.1 >> ~/.ssh/known_hosts
   script:
     - rm -rf build devel
-    - catkin_make
+    - colcon build
     - roscore &
     - roscore_pid=$!
-    - catkin_make run_tests
+    - colcon teat
     - kill $roscore_pid
 
 build_linux:
@@ -49,9 +49,9 @@ build_linux:
     - ssh-keyscan -t rsa -p 2222 192.168.10.1 >> ~/.ssh/known_hosts
   script:
     - rm -rf build devel
-    - catkin_make
+    - colcon build
     - roscore &
     - roscore_pid=$!
-    - catkin_make run_tests
+    - colcon tests
     - kill $roscore_pid
 
