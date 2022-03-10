@@ -7,34 +7,24 @@
  *************************************************************************/
 
 #include "LidarRosDriver.h"
-#include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
 
-#include <LidarDevice.h>
-#include <PlaybackDevice.h>
 #include <DeviceManager.h>
 #include <DolphinDevice.h>
-// #include <Types.h>
-// #include <XmlRpcValue.h>
-// #include <common/FileSystem.h>
-// #include <common/Timer.h>
-// #include <common_msgs/LidarRosService.h>
-// #include <common_msgs/ParameterMsg.h>
-#include <common_msgs/srv/lidar_ros_service.h>
-#include "common_msgs/msg/parameter_msg.h"
+#include <LidarDevice.h>
+#include <PlaybackDevice.h>
+#include <common/FileSystem.h>
+#include <common/Timer.h>
 #include <config/DeviceParamsConfig.h>
-//#include <ros/ros.h>
-#include "rclcpp/rclcpp.hpp"
-#include <rosbag/bag.h>
-#include <sensor_msgs/PointCloud.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/point_cloud_conversion.h>
-//#include <std_msgs/String.h>
+
+#include <rclcpp/rclcpp.hpp>
+#include <rosbag2_cpp/writer.hpp>
+#include <rosbag2_cpp/writers/sequential_writer.hpp>
+#include <rosbag2_storage/ros_helper.hpp>
+#include <sensor_msgs/msg/point_cloud.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud_conversion.hpp>
 #include <std_msgs/msg/string.hpp>
-
 #include <thread>
-
-#include "ParameterFlag.h"
 
 namespace onet { namespace lidar_ros {
 
@@ -68,15 +58,14 @@ struct LidarRosDriver::Impl
     bool m_auto_start{true};
     bool m_save_bag{false};
     std::string m_update_parameter;
-    rosbag::Bag m_bag;
-    // ros::NodeHandle m_node;        //节点
-    // ros::Publisher m_cloud_pub;    //点云发布者
-    // ros::Publisher m_param_pub;    //参数设置状态发布者
-    // ros::ServiceServer m_service;  // connect参数设置状态
-    rclcpp::Node m_node;        //节点
-    rclcpp::Publisher m_cloud_pub;    //点云发布者
-    rclcpp::Publisher m_param_pub;    //参数设置状态发布者
-    //rclcpp::ServiceServer m_service;  // connect参数设置状态
+    // rosbag2 example:
+    // https://github.com/ros2/rosbag2/blob/master/rosbag2_tests/test/rosbag2_tests/test_rosbag2_cpp_api.cpp
+    rosbag2_cpp::Writer m_rosbag_writer{
+        std::move(std::make_unique<rosbag2_cpp::writers::SequentialWriter>())};
+    rclcpp::Node::SharedPtr m_node;                                                 //节点
+    std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>> m_cloud_pub;  //点云发布者
+    // rclcpp::Publisher m_param_pub;  //参数设置状态发布者
+    // rclcpp::ServiceServer m_service;  // connect参数设置状态
 
     std::string m_point_cloud_topic_name{"lidar_point_cloud"};
     std::string m_frame_id{"lidar"};
@@ -100,56 +89,58 @@ struct LidarRosDriver::Impl
     lidar::PlaybackDevice *m_playback_device{nullptr};
     std::shared_ptr<onet::lidar::DlphDeviceParameter> m_dev_param;
 
-    //void InitLidar(ros::NodeHandle node)
-    void InitLidar(rclcpp::Node node)
+    void InitLidar()
     {
         near_noise_dist =
-            node.param<int>("/onet_lidar_ros_driver/near_noise_dist", near_noise_dist);
-        near_noise_intensity =
-            node.param<int>("/onet_lidar_ros_driver/near_noise_intensity", near_noise_intensity);
-        time_dif = node.param<int>("/onet_lidar_ros_driver/time_dif", time_dif);
-        high_pul = node.param<int>("/onet_lidar_ros_driver/high_pul", high_pul);
-        time_fly = node.param<int>("/onet_lidar_ros_driver/time_fly", time_fly);
-        pulse_dif = node.param<int>("/onet_lidar_ros_driver/pulse_dif", pulse_dif);
-        sample_rate = node.param<int>("/onet_lidar_ros_driver/sample_rate", sample_rate);
+            m_node->get_parameter<int>("/onet_lidar_ros_driver/near_noise_dist", near_noise_dist);
+        near_noise_intensity = m_node->get_parameter<int>(
+            "/onet_lidar_ros_driver/near_noise_intensity", near_noise_intensity);
+        time_dif = m_node->get_parameter<int>("/onet_lidar_ros_driver/time_dif", time_dif);
+        high_pul = m_node->get_parameter<int>("/onet_lidar_ros_driver/high_pul", high_pul);
+        time_fly = m_node->get_parameter<int>("/onet_lidar_ros_driver/time_fly", time_fly);
+        pulse_dif = m_node->get_parameter<int>("/onet_lidar_ros_driver/pulse_dif", pulse_dif);
+        sample_rate = m_node->get_parameter<int>("/onet_lidar_ros_driver/sample_rate", sample_rate);
 
-        m_auto_start = m_node.param<bool>("/onet_lidar_ros_driver/auto_start", m_auto_start);
-        m_save_bag = m_node.param<bool>("/onet_lidar_ros_driver/save_bag", m_save_bag);
-        m_point_cloud_topic_name = m_node.param<std::string>(
+        m_auto_start =
+            m_node->get_parameter<bool>("/onet_lidar_ros_driver/auto_start", m_auto_start);
+        m_save_bag = m_node->get_parameter<bool>("/onet_lidar_ros_driver/save_bag", m_save_bag);
+        m_point_cloud_topic_name = m_node->get_parameter<std::string>(
             "/onet_lidar_ros_driver/point_cloud_topic_name", m_point_cloud_topic_name);
-        m_device_ip = m_node.param<std::string>("/onet_lidar_ros_driver/device_ip", m_device_ip);
-        m_port = m_node.param<int>("/onet_lidar_ros_driver/port", m_port);
-        m_frame_id = m_node.param<std::string>("/onet_lidar_ros_driver/frame_id", m_frame_id);
-        m_playback_file_path = m_node.param<std::string>(
+        m_device_ip =
+            m_node->get_parameter<std::string>("/onet_lidar_ros_driver/device_ip", m_device_ip);
+        m_port = m_node->get_parameter<int>("/onet_lidar_ros_driver/port", m_port);
+        m_frame_id =
+            m_node->get_parameter<std::string>("/onet_lidar_ros_driver/frame_id", m_frame_id);
+        m_playback_file_path = m_node->get_parameter<std::string>(
             "/onet_lidar_ros_driver/playback_file_path", m_playback_file_path);
     }
 
-    //Impl(ros::NodeHandle node) : m_node(node)
-    Impl(rclcpp::Node node) : m_node(node)
+    Impl(rclcpp::Node::SharedPtr node) : m_node(node)
     {
         try
         {
             // fetch parameters
-            InitLidar(m_node);
+            InitLidar();
 
         } catch (const std::exception &e)
         {
-            ROS_ERROR("Error fetching parameters: %s", e.what());
+            RCLCPP_ERROR(m_node->get_logger(), "Error fetching parameters: %s", e.what());
         }
-        // m_cloud_pub = m_node.advertise<sensor_msgs::PointCloud2>(m_point_cloud_topic_name, 100);
-        // m_param_pub = m_node.advertise<common_msgs::ParameterMsg>(param_msgs, 100);
-        // m_service = m_node.advertiseService(service_param_flag,
-        //                                     &LidarRosDriver::Impl::HandlerServiceRequest, this);
-        m_cloud_pub = m_node->create_publisher<sensor_msg::PointCloud2>(m_point_cloud_topic_name, 100);
-        m_param_pub = m_node->create_publisher<common_msgs::ParameterMsg>(param_msgs, 100);
-        // m_service = m_node->create_publisher(service_param_flag,
-        //                                     &LidarRosDriver::Impl::HandlerServiceRequest, this);
+        m_cloud_pub =
+            m_node->create_publisher<sensor_msgs::msg::PointCloud2>(m_point_cloud_topic_name, 100);
         m_callback = [this](uint32_t frame_id, lidar::PointCloud<lidar::PointXYZI> &cloud) {
             HandlePointCloud(frame_id, cloud);
         };
         if (m_save_bag)
         {
-            m_bag.open("test.bag", rosbag::bagmode::Write);
+            rosbag2_cpp::StorageOptions storage_options;
+            storage_options.uri = "file:///tmp/lidar_ros_driver.bag";
+            rosbag2_cpp::ConverterOptions converter_options;
+            m_rosbag_writer.open(storage_options, converter_options);
+            rosbag2_storage::TopicMetadata tm;
+            tm.name = m_point_cloud_topic_name;
+            tm.type = "sensor_msgs/msg/PointCloud2";
+            m_rosbag_writer.create_topic(tm);
         }
         if (m_auto_start)
         {
@@ -161,19 +152,13 @@ struct LidarRosDriver::Impl
     {
         if (m_lidar_device)
         {
-            //ROS_INFO("Stop lidar device");
-            RCLCPP_INFO(m_node->get_logger(),"Stop lidar device");
+            RCLCPP_INFO(m_node->get_logger(), "Stop lidar device");
             m_lidar_device->Stop();
         }
         if (m_playback_device)
         {
-            //ROS_INFO("Stop playback device");
-            RCLCPP_INFO(m_node->get_logger(),"Stop playback device");
+            RCLCPP_INFO(m_node->get_logger(), "Stop playback device");
             m_playback_device->Stop();
-        }
-        if (m_save_bag)
-        {
-            m_bag.close();
         }
     }
 
@@ -183,9 +168,9 @@ struct LidarRosDriver::Impl
         {
             return;
         }
-        cppbase::Timer<cppbase::us> timer;
-        sensor_msgs::PointCloud pointcloud;
-        pointcloud.header.stamp = ros::Time::now();
+        cppbase::TimerUs timer;
+        sensor_msgs::msg::PointCloud pointcloud;
+        pointcloud.header.stamp = m_node->now();
         pointcloud.header.frame_id = m_frame_id;
         pointcloud.points.resize(cloud.size());
         pointcloud.channels.resize(1);
@@ -199,16 +184,20 @@ struct LidarRosDriver::Impl
             pointcloud.points[i].z = pt[2];
             pointcloud.channels[0].values[i] = pt[3];
         }
-        //ROS_INFO("end time:%d us", static_cast<int>(timer.Elapsed()));
-        RCLCPP_INFO(m_node->get_logger(),"end time:%d us", static_cast<int>(timer.Elapsed()));
+        RCLCPP_INFO(m_node->get_logger(), "end time:%d us", static_cast<int>(timer.Elapsed()));
         timer.Stop();
         // convert pointcloud to pointcloud2
-        sensor_msgs::PointCloud2 pointcloud2;
-        convertPointCloudToPointCloud2(pointcloud, pointcloud2);
-        m_cloud_pub.publish(pointcloud2);
+        sensor_msgs::msg::PointCloud2 pointcloud2;
+        sensor_msgs::convertPointCloudToPointCloud2(pointcloud, pointcloud2);
+        m_cloud_pub->publish(pointcloud2);
         if (m_save_bag)
         {
-            m_bag.write(m_point_cloud_topic_name, ros::Time::now(), pointcloud2);
+            auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+            rcutils_system_time_now(&bag_message->time_stamp);
+            bag_message->topic_name = m_point_cloud_topic_name;
+            bag_message->serialized_data = rosbag2_storage::make_serialized_message(
+                pointcloud2.data.data(), pointcloud2.row_step * pointcloud2.height);
+            m_rosbag_writer.write(bag_message);
         }
     }
 
@@ -217,10 +206,9 @@ struct LidarRosDriver::Impl
      */
     void Run()
     {
-        //ROS_INFO("Current directory: %s", fs::current_path().string().c_str());
-        //ROS_INFO("Playback file path: %s", m_playback_file_path.c_str());
-        RCLCPP_INFO(m_node->get_logger(),"Current directory: %s", fs::current_path().string().c_str());
-        RCLCPP_INFO(m_node->get_logger(),"Playback file path: %s", m_playback_file_path.c_str());
+        RCLCPP_INFO(m_node->get_logger(), "Current directory: %s",
+                    fs::current_path().string().c_str());
+        RCLCPP_INFO(m_node->get_logger(), "Playback file path: %s", m_playback_file_path.c_str());
         // Use PlaybackDevice if playback_file_path is not empty
         if (!m_playback_file_path.empty())
         {
@@ -228,7 +216,7 @@ struct LidarRosDriver::Impl
             m_playback_device = GetPlaybackDevice(file_list);
             if (!m_playback_device)
             {
-                ROS_ERROR("Error: failed to create playback device!");
+                RCLCPP_ERROR(m_node->get_logger(), "Error: failed to create playback device!");
                 return;
             }
             try
@@ -238,19 +226,19 @@ struct LidarRosDriver::Impl
                 m_playback_device->RegisterPointCloudCallback(m_callback);
                 if (!m_playback_device->Start())
                 {
-                    ROS_ERROR("Error: failed to start playback device!");
+                    RCLCPP_ERROR(m_node->get_logger(), "Error: failed to start playback device!");
                     return;
                 }
             } catch (std::exception &e)
             {
-                ROS_ERROR("Error:%s", e.what());
+                RCLCPP_ERROR(m_node->get_logger(), "Error:%s", e.what());
             }
         } else
         {
             m_lidar_device = GetLidarDevice(m_device_ip, m_port);
             if (!m_lidar_device)
             {
-                ROS_ERROR("Error: failed to connect to LiDAR device!");
+                RCLCPP_ERROR(m_node->get_logger(), "Error: failed to connect to LiDAR device!");
                 return;
             }
             try
@@ -266,7 +254,7 @@ struct LidarRosDriver::Impl
                     close_laser_param.parameters[4] = lidar_param.laser.pulse_width;
                     m_lidar_device->SetRegisterParameter(lidar::LASER_CTL, close_laser_param);
                 }
-                sleep(2);
+                std::this_thread::sleep_for(std::chrono::milliseconds(2000));
                 m_lidar_device->SetLaser(lidar_param.laser);
                 {
                     //删除近处杂点
@@ -297,539 +285,24 @@ struct LidarRosDriver::Impl
                 m_lidar_device->RegisterPointCloudCallback(m_callback);
                 if (!m_lidar_device->Start())
                 {
-                    ROS_ERROR("Error: failed to start LiDAR device!");
+                    RCLCPP_ERROR(m_node->get_logger(), "Error: failed to start LiDAR device!");
                     return;
                 }
             } catch (std::exception &e)
             {
-                ROS_ERROR("Error:%s", e.what());
+                RCLCPP_ERROR(m_node->get_logger(), "Error:%s", e.what());
             }
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    // Service related functions
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    void SendParameterState(std::string parameter_flag, bool state, std::string error_info)
-    {
-        common_msgs::ParameterMsg msgs;
-        msgs.parameter_flag = parameter_flag;
-        msgs.state = state;
-        msgs.error = error_info;
-        m_param_pub.publish(msgs);
-    }
-
-    bool HandlerServiceRequest(common_msgs::LidarRosService::Request &req,
-                               common_msgs::LidarRosService::Response &res)
-    {
-        //ROS_INFO("Type: %s", req.type.c_str());
-        RCLCPP_INFO(m_node->get_logger(),"Type: %s", req.type.c_str());
-        if (req.type == init_device_flag)
-        {
-            return InitDevice(req, res);
-        } else if (req.type == disconnect_flag)
-        {
-            return DisconnectDevice(req, res);
-        } else if (req.type == start_playback_flag)
-        {
-            return StartPlaybackDevice(req, res);
-        } else if (req.type == pause_playback_flag)
-        {
-            return PausePlaybackDevice(req, res);
-        } else if (req.type == stop_device_flag)
-        {
-            return StopDevice(req, res);
-        } else if (req.type == exit_flag)
-        {
-            if (req.state)
-            {
-                m_running = false;
-                res.success = true;
-                res.error = "";
-            }
-        }
-        res.success = true;
-        return true;
-    }
-
-    bool InitDevice(common_msgs::LidarRosService::Request &req,
-                    common_msgs::LidarRosService::Response &res)
-    {
-        if (!m_lidar_device)
-        {
-            res.success = false;
-            res.error = std::string("sdasda");
-            return true;
-        }
-        if (req.state)
-        {
-            try
-            {
-                m_lidar_device->Init();
-                res.success = true;
-            } catch (std::exception &e)
-            {
-                ROS_ERROR("Error:%s", e.what());
-                res.success = false;
-                res.error = std::string(e.what());
-            }
-        }
-        return true;
-    }
-
-    bool DisconnectDevice(common_msgs::LidarRosService::Request &req,
-                          common_msgs::LidarRosService::Response &res)
-    {
-        if (req.state)
-        {
-            if (m_lidar_device)
-            {
-                if (m_lidar_device->Stop())
-                {
-                    m_lidar_device = nullptr;
-                } else
-                {
-                    ROS_ERROR("Error:Failed to stop scanning on the LiDAR sensor.");
-                }
-            }
-        }
-        res.success = m_lidar_device ? false : true;
-        if (!res.success)
-        {
-            res.error = "Error:Failed to stop scanning on the LiDAR sensor.";
-        }
-        return true;
-    }
-
-    bool StartPlaybackDevice(common_msgs::LidarRosService::Request &req,
-                             common_msgs::LidarRosService::Response &res)
-    {
-        bool state = false;
-
-        try
-        {
-            if (m_playback_device && req.state)
-            {
-                m_playback_device->RegisterPointCloudCallback(m_callback);
-                if (!m_playback_device->Start())
-                {
-                    ROS_ERROR("Error:Playback failed.");
-                    res.success = false;
-                    res.error = "Error:Playback failed.";
-                } else
-                {
-                    res.success = true;
-                }
-            }
-        } catch (ros::Exception &e)
-        {
-            res.success = false;
-            res.error = std::string(e.what());
-            ROS_ERROR("Error:%s", e.what());
-            return state;
-        }
-        return state;
-    }
-
-    bool PausePlaybackDevice(common_msgs::LidarRosService::Request &req,
-                             common_msgs::LidarRosService::Response &res)
-    {
-        if (!m_playback_device)
-            return false;
-        bool state = false;
-        state = true;
-        if (m_playback_device && m_playback_device->IsStarted())
-        {
-            m_playback_device->Pause(req.state);
-            res.success = m_playback_device->IsStarted() ? false : true;
-            if (m_playback_device->IsStarted())
-            {
-                res.error = "Error:Playback pause failed";
-            }
-        }
-        return state;
-    }
-
-    bool StopDevice(common_msgs::LidarRosService::Request &req,
-                    common_msgs::LidarRosService::Response &res)
-    {
-        bool state = true;
-        if (m_playback_device && m_playback_device->IsStarted())
-        {
-            if (!m_playback_device->Stop())
-            {
-                ROS_ERROR("Error:Playback stop failed");
-            }
-            res.success = m_playback_device->Stop();
-            if (m_playback_device->IsStarted())
-            {
-                res.error = "Error:Playback stop failed";
-            }
-        } else
-        {
-            if (m_lidar_device && m_lidar_device->IsStarted())
-            {
-                if (!m_lidar_device->Stop())
-                {
-                    ROS_ERROR("Error:Lidar Device stop failed");
-                }
-                res.success = m_lidar_device->Stop();
-                if (m_lidar_device->IsStarted())
-                {
-                    res.error = "Error:Lidar Device stop failed";
-                }
-            }
-        }
-        return state;
-    }
-
-    bool ConnectDevice()
-    {
-        bool state = false;
-        int port;
-        std::string ip;
-        try
-        {
-            XmlRpc::XmlRpcValue connect_xml;
-            if (m_node.getParam(connect_flag, connect_xml))
-            {
-                ip = static_cast<std::string>(connect_xml["ip"]);
-                port = static_cast<int>(connect_xml["port"]);
-                //ROS_INFO("ip:%s port:%d\n", ip.c_str(), port);
-                RCLCPP_INFO(m_node->get_logger(),"ip:%s port:%d\n", ip.c_str(), port);
-                state = true;
-            }
-        } catch (ros::Exception &e)
-        {
-            ROS_ERROR("Error:%s", e.what());
-            SendParameterState(connect_flag, false, std::string(e.what()));
-            return state;
-        }
-        if (state)
-        {
-            if (m_lidar_device && m_lidar_device->Stop())
-            {
-                m_lidar_device = nullptr;
-            }
-            m_lidar_device = GetLidarDevice(ip, port);
-            if (m_lidar_device)
-            {
-                SendParameterState(connect_flag, true, "");
-            } else
-            {
-                SendParameterState(connect_flag, false, "connect failed!");
-            }
-        }
-        return state;
-    }
-
-    bool SetLaserParameter()
-    {
-        if (!m_lidar_device)
-            return false;
-        bool state = false;
-        LaserParameter laserparam;
-        try
-        {
-            XmlRpc::XmlRpcValue laserparam_xml;
-            if (m_node.getParam(laser_parameter_flag, laserparam_xml))
-            {
-                laserparam.level = static_cast<int>(laserparam_xml["level"]);
-                laserparam.factor = static_cast<int>(laserparam_xml["factor"]);
-                laserparam.pulse_width = static_cast<int>(laserparam_xml["pulse_width"]);
-                //ROS_INFO("level:%d factor:%d pulse_width:%d.", laserparam.level, laserparam.factor,
-                RCLCPP_INFO(m_node->get_logger(),"level:%d factor:%d pulse_width:%d.", laserparam.level, laserparam.factor,
-                         laserparam.pulse_width);
-                state = true;
-            }
-        } catch (ros::Exception &e)
-        {
-            SendParameterState(laser_parameter_flag, false, std::string(e.what()));
-            ROS_ERROR("Error:%s", e.what());
-            return state;
-        }
-
-        try
-        {
-            m_lidar_device->SetLaser(laserparam);
-            SendParameterState(laser_parameter_flag, true, "");
-        } catch (std::exception &e)
-        {
-            SendParameterState(laser_parameter_flag, false, std::string(e.what()));
-            ROS_ERROR("Error:%s", e.what());
-        }
-        return state;
-    }
-
-    bool SetEchoNumberParameter()
-    {
-        if (!m_lidar_device)
-            return false;
-        bool state = false;
-        int echo_number;
-        if (m_node.getParam(echo_number_flag, echo_number))
-        {
-            //ROS_INFO("echo_number:%d.", echo_number);
-            RCLCPP_INFO(m_node->get_logger(),"echo_number:%d.", echo_number);
-            state = true;
-            try
-            {
-                m_lidar_device->SetEchoNumber(echo_number);
-                SendParameterState(echo_number_flag, true, "");
-            } catch (std::exception &e)
-            {
-                SendParameterState(echo_number_flag, false, std::string(e.what()));
-                ROS_ERROR("Error:%s", e.what());
-            }
-        }
-        return state;
-    }
-
-    bool SetRawDataType()
-    {
-        if (!m_lidar_device)
-            return false;
-        bool state = false;
-        try
-        {
-            int32_t type;
-            if (m_node.getParam(raw_data_type_flag, type))
-            {
-                //ROS_INFO("raw_data_type:%d.", type);
-                RCLCPP_INFO(m_node->get_logger(),"raw_data_type:%d.", type);
-                state = true;
-                m_lidar_device->SetRawDataType((RawDataType)type);
-                SendParameterState(raw_data_type_flag, true, "");
-            }
-        } catch (std::exception &e)
-        {
-            ROS_ERROR("Error:%s", e.what());
-            SendParameterState(raw_data_type_flag, false, std::string(e.what()));
-        }
-        return state;
-    }
-
-    bool SetScanMode()
-    {
-        if (!m_lidar_device)
-            return false;
-        bool state = false;
-        try
-        {
-            int mode;
-            if (m_node.getParam(scan_mode_flag, mode))
-            {
-                //ROS_INFO("scan_mode:%d.", mode);
-                RCLCPP_INFO(m_node->get_logger(),"scan_mode:%d.", mode);
-                state = true;
-                m_lidar_device->SetScanMode((ScanMode)mode);
-                SendParameterState(scan_mode_flag, true, "");
-            }
-        } catch (std::exception &e)
-        {
-            ROS_ERROR("Error:%s", e.what());
-            SendParameterState(scan_mode_flag, false, std::string(e.what()));
-        }
-        return state;
-    }
-
-    bool SetViewParameter()
-    {
-        if (!m_lidar_device)
-            return false;
-        bool state = false;
-        ViewParameter viewparam;
-        try
-        {
-            XmlRpc::XmlRpcValue viewparam_xml;
-            if (m_node.getParam(view_parameter_flag, viewparam_xml) &&
-                viewparam_xml.getType() == XmlRpc::XmlRpcValue::TypeStruct)
-            {
-                state = true;
-                viewparam.frame = static_cast<int>(viewparam_xml["frame"]);
-                viewparam.steps[0] = static_cast<int>(viewparam_xml["steps"][0]);
-                viewparam.steps[1] = static_cast<int>(viewparam_xml["steps"][1]);
-                viewparam.steps[2] = static_cast<int>(viewparam_xml["steps"][2]);
-                viewparam.steps[3] = static_cast<int>(viewparam_xml["steps"][3]);
-                viewparam.perspectives[0] = static_cast<double>(viewparam_xml["perspectives"][0]);
-                viewparam.perspectives[1] = static_cast<double>(viewparam_xml["perspectives"][1]);
-                viewparam.perspectives[2] = static_cast<double>(viewparam_xml["perspectives"][2]);
-                viewparam.perspectives[3] = static_cast<double>(viewparam_xml["perspectives"][3]);
-                viewparam.perspectives[4] = static_cast<double>(viewparam_xml["perspectives"][4]);
-                //ROS_INFO("frame:%d steps:{%d,%d,%d,%d} perspectives:{%f,%f,%f,%f,%f}",
-                RCLCPP_INFO(m_node->get_logger(),"frame:%d steps:{%d,%d,%d,%d} perspectives:{%f,%f,%f,%f,%f}",
-                         viewparam.frame, viewparam.steps[0], viewparam.steps[1],
-                         viewparam.steps[2], viewparam.steps[3], viewparam.perspectives[0],
-                         viewparam.perspectives[1], viewparam.perspectives[2],
-                         viewparam.perspectives[3], viewparam.perspectives[4]);
-            }
-        } catch (ros::Exception &e)
-        {
-            SendParameterState(view_parameter_flag, false, std::string(e.what()));
-            ROS_ERROR("Error:%s", e.what());
-            return state;
-        }
-        try
-        {
-            m_lidar_device->SetViewSpeed(viewparam);
-            SendParameterState(view_parameter_flag, true, "");
-        } catch (std::exception &e)
-        {
-            SendParameterState(view_parameter_flag, false, std::string(e.what()));
-            ROS_ERROR("Error:%s", e.what());
-        }
-        return state;
-    }
-
-    bool SetPlayback()
-    {
-        bool state = false;
-        if (m_playback_device && m_playback_device->IsStarted())
-            return state;
-        std::vector<std::string> files;
-        m_node.getParam(playback_flag, files);
-        if (files.size())
-        {
-            state = true;
-            m_playback_device = GetPlaybackDevice(files);
-            if (m_playback_device)
-            {
-                m_playback_device->SetParameter(m_dev_param);
-                m_playback_device->Init();
-                SendParameterState(playback_flag, true, "");
-            } else
-            {
-                SendParameterState(playback_flag, false, "create playback device failed");
-            }
-        }
-        return state;
-    }
-
-    bool StartDevice()
-    {
-        bool state = false;
-
-        try
-        {
-            XmlRpc::XmlRpcValue option_xml;
-            if (m_node.getParam(start_device_flag, option_xml))
-            {
-                state = true;
-                bool saveable = static_cast<bool>(option_xml["savable"]);
-                int rule = static_cast<int>(option_xml["folder_rule"]);
-                std::string path = static_cast<std::string>(option_xml["path"]);
-                //ROS_INFO("savable:%d folder_rule:%d path:%s.", saveable, rule, path.c_str());
-                RCLCPP_INFO(m_node->get_logger(),"savable:%d folder_rule:%d path:%s.", saveable, rule, path.c_str());
-                onet::lidar::RawDataSavingConfig config(
-                    saveable, (lidar::RawDataSavingConfig::FolderRule)rule, path);
-
-                if (m_lidar_device)
-                {
-                    m_lidar_device->SetRawDataSavingConfig(config);
-                    m_lidar_device->RegisterPointCloudCallback(m_callback);
-                    if (!m_lidar_device->Start())
-                    {
-                        ROS_ERROR("Error:Failed to start scanning on the LiDAR sensor.");
-                        SendParameterState(start_device_flag, false,
-                                           "Failed to start scanning on the LiDAR sensor.");
-                    } else
-                    {
-                        SendParameterState(start_device_flag, true, "");
-                    }
-                }
-            }
-        } catch (ros::Exception &e)
-        {
-            SendParameterState(view_parameter_flag, false, std::string(e.what()));
-            ROS_ERROR("Error:%s", e.what());
-            return state;
-        }
-        return state;
-    }
-
-    void UpdateParameter()
-    {
-        //如此编写，主要是针对多参数设置时，每个参数设置对应
-        if (m_update_parameter.empty())
-        {
-            m_node.getParam(update_param_flag, m_update_parameter);
-        }
-
-        if (!m_update_parameter.empty())
-        {
-            bool state = false;
-            int retry = 3;
-            do
-            {
-                if (m_update_parameter == connect_flag)
-                {
-                    state = this->ConnectDevice();
-                } else if (m_update_parameter == laser_parameter_flag)
-                {
-                    state = this->SetLaserParameter();
-                } else if (m_update_parameter == echo_number_flag)
-                {
-                    state = this->SetEchoNumberParameter();
-                } else if (m_update_parameter == raw_data_type_flag)
-                {
-                    state = this->SetRawDataType();
-                } else if (m_update_parameter == scan_mode_flag)
-                {
-                    state = this->SetScanMode();
-                } else if (m_update_parameter == playback_flag)
-                {
-                    state = this->SetPlayback();
-                } else if (m_update_parameter == view_parameter_flag)
-                {
-                    state = this->SetViewParameter();
-                } else if (m_update_parameter == start_device_flag)
-                {
-                    state = StartDevice();
-                }
-                if (!state)
-                {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(200));  // 200ms
-                }
-            } while (!state && retry-- > 0);
-
-            //ROS_INFO("delete parameter:%s %d %d", m_update_parameter.c_str(), state, retry);
-             RCLCPP_INFO(m_node->get_logger(),"delete parameter:%s %d %d", m_update_parameter.c_str(), state, retry));
-            m_node.deleteParam(m_update_parameter);
-            //判断update_param参数里数据是否更新为新设置参数,更新就不删除update_param本参数
-            std::string update_parameter_temp;
-            if (m_node.getParam(update_param_flag, update_parameter_temp))
-            {
-                if (update_parameter_temp == m_update_parameter)
-                {
-                    m_node.deleteParam(update_param_flag);
-                }
-            }
-            m_update_parameter.clear();
-        }
-    }
-
-    void ClearParameter()
-    {
-        if (m_node.hasParam(update_param_flag))
-        {
-            std::string update_parameter;
-            if (m_node.getParam(update_param_flag, update_parameter))
-            {
-                m_node.deleteParam(update_parameter);
-            }
-            m_node.deleteParam(update_param_flag);
         }
     }
 };
 
-//LidarRosDriver::LidarRosDriver(ros::NodeHandle node)
-LidarRosDriver::LidarRosDriver(rclcpp::Node node)
+LidarRosDriver::LidarRosDriver(rclcpp::Node::SharedPtr node)
     : m_impl(std::make_shared<LidarRosDriver::Impl>(node))
 {}
 
 void LidarRosDriver::UpdateParameter()
 {
-    m_impl->UpdateParameter();
+    // m_impl->UpdateParameter();
 }
 
 bool LidarRosDriver::IsRunning() const

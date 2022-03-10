@@ -9,17 +9,15 @@
 
 #pragma once
 
-// #include <ros/ros.h>
-#include "rclcpp/rclcpp.hpp"
-
 #include <memory>
+#include <rclcpp/rclcpp.hpp>
 
 namespace onet { namespace lidar_ros {
 
 class LidarRosDriver
 {
 public:
-    LidarRosDriver(ros::NodeHandle node);
+    LidarRosDriver(rclcpp::Node::SharedPtr node);
     ~LidarRosDriver() = default;
     bool IsRunning() const;
     void UpdateParameter();

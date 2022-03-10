@@ -6,23 +6,19 @@
  * All rights reserved.
  *************************************************************************/
 
-#include <ParameterFlag.h>
-#include <XmlRpcValue.h>
-#include <ros/ros.h>
-#include <sensor_msgs/PointCloud.h>
-
-#include <common_msgs/ParameterMsg.h>
+#include <gtest/gtest.h>
 #include <lidar_ros_driver/LidarRosDriver.h>
 
-#include <gtest/gtest.h>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/point_cloud.hpp>
 #include <thread>
 
 TEST(LidarRosDriver, LidarRosDriver)
 {
-    ros::NodeHandle node;
+    auto node = rclcpp::Node::make_shared("tests");
     onet::lidar_ros::LidarRosDriver dvr(node);
-    ros::Rate loop_rate(100);
-    ros::spinOnce();
+    rclcpp::Rate loop_rate(100);
+    rclcpp::spin_some(node);
     loop_rate.sleep();
     EXPECT_TRUE(dvr.IsRunning());
     EXPECT_FALSE(dvr.IsRunning());
@@ -30,7 +26,7 @@ TEST(LidarRosDriver, LidarRosDriver)
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "tests");
+    rclcpp::init(argc, argv);
     ::testing::InitGoogleTest(&argc, argv);
 
     return RUN_ALL_TESTS();

@@ -29,10 +29,6 @@ nightly_linux:
   script:
     - rm -rf build devel
     - colcon build
-    - roscore &
-    - roscore_pid=$!
-    - colcon teat
-    - kill $roscore_pid
 
 build_linux:
   image: onet/lidar:ros_foxy
@@ -50,8 +46,3 @@ build_linux:
   script:
     - rm -rf build devel
     - colcon build
-    - roscore &
-    - roscore_pid=$!
-    - colcon tests
-    - kill $roscore_pid
-

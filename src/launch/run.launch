@@ -1,6 +1,6 @@
 <launch>
 
-    <arg name="rviz" default="true" /> <!-- true: 自动开启 RViz-->
+    <arg name="rviz2" default="true" /> <!-- true: 自动开启 RViz-->
 
     <arg name="point_cloud_topic_name" default="lidar_point_cloud" />
     <arg name="frame_id" default="lidar" />
@@ -33,7 +33,7 @@
         <param name="sample_rate" type="int" value="$(arg sample_rate)" />
     </node>
 
-    <group if="$(arg rviz)">
-    <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find lidar_ros_driver)/config/onet_lidar.rviz" />
+    <group if="$(arg rviz2)">
+    <node launch-prefix="nice" pkg="rviz2" type="rviz2" name="rviz2" args="-d $(find lidar_ros_driver)/config/onet_lidar.rviz" />
     </group>
 </launch>

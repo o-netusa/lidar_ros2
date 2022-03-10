@@ -6,28 +6,16 @@
  * All rights reserved.
  *************************************************************************/
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include "LidarRosDriver.h"
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "onet_lidar_node");
-    ros::NodeHandle node;
+    rclcpp::init(argc, argv);
+    auto node = rclcpp::Node::make_shared("lidar_ros_driver");
     onet::lidar_ros::LidarRosDriver dvr(node);
-    ros::Rate loop_rate(100);
-    ros::spin();
-    // while (ros::ok())
-    // {
-    //     // Check running status
-    //     // bool ret = dvr.IsRunning();
-    //     // if (!ret)
-    //     //     break;
-    //     // dvr.UpdateParameter();
-    //     // Run LidarDevice
-    //     // dvr.Run();
-    //     ros::spinOnce();
-    //     loop_rate.sleep();
-    // }
+    rclcpp::Rate loop_rate(100);
+    rclcpp::spin(node);
     return 0;
 }

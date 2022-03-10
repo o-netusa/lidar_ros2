@@ -35,9 +35,9 @@ set(srv_file "srv/LidarRosService.srv")
 #       std_msgs
 #     )
 rosidl_generate_interfaces(${PROJECT_NAME}
-        ${msg_files}
-        ${srv_file}
-        DEPENDENCIES builtin_interfaces)
+      ${msg_files}
+      ${srv_file}
+      DEPENDENCIES builtin_interfaces)
 
 # catkin_package(
 #   CATKIN_DEPENDS message_runtime

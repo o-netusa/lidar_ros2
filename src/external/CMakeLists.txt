@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 include(DownloadProject)
@@ -26,11 +26,11 @@ message("==> Configuring lidardevice")
 download_project(
   PROJ     lidardevice
   URL      ${CMAKE_CURRENT_SOURCE_DIR}/lidardevice/LidarDevice-1.0.0-Linux.tar.gz
-  URL_HASH MD5=20c9be328eb3c028fb6f8d5dd1d73636
+  URL_HASH MD5=0831f6991d916a6534aa13fe5d464106
   QUIET
 )
 add_library(lidardevice INTERFACE)
 target_include_directories(lidardevice INTERFACE ${lidardevice_SOURCE_DIR}/include)
 target_link_directories(lidardevice INTERFACE ${lidardevice_SOURCE_DIR}/lib)
-target_link_libraries(lidardevice INTERFACE LidarDevice)
+target_link_libraries(lidardevice INTERFACE LidarDeviceStatic eigen sigslot stduuid)
 set(lidardevice_SOURCE_DIR ${lidardevice_SOURCE_DIR} CACHE STRING "")
