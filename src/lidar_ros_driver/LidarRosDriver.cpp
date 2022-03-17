@@ -91,28 +91,38 @@ struct LidarRosDriver::Impl
 
     void InitLidar()
     {
-        near_noise_dist =
-            m_node->get_parameter<int>("/onet_lidar_ros_driver/near_noise_dist", near_noise_dist);
-        near_noise_intensity = m_node->get_parameter<int>(
-            "/onet_lidar_ros_driver/near_noise_intensity", near_noise_intensity);
-        time_dif = m_node->get_parameter<int>("/onet_lidar_ros_driver/time_dif", time_dif);
-        high_pul = m_node->get_parameter<int>("/onet_lidar_ros_driver/high_pul", high_pul);
-        time_fly = m_node->get_parameter<int>("/onet_lidar_ros_driver/time_fly", time_fly);
-        pulse_dif = m_node->get_parameter<int>("/onet_lidar_ros_driver/pulse_dif", pulse_dif);
-        sample_rate = m_node->get_parameter<int>("/onet_lidar_ros_driver/sample_rate", sample_rate);
+        m_node->declare_parameter("rviz2");
+        m_node->declare_parameter("point_cloud_topic_name");
+        m_node->declare_parameter("frame_id");
+        m_node->declare_parameter("device_ip");
+        m_node->declare_parameter("port");
+        m_node->declare_parameter("playback_file_path");
+        m_node->declare_parameter("auto_start");
+        m_node->declare_parameter("save_bag");
+        m_node->declare_parameter("near_noise_dist");
+        m_node->declare_parameter("near_noise_intensity");
+        m_node->declare_parameter("time_dif");
+        m_node->declare_parameter("high_pul");
+        m_node->declare_parameter("time_fly");
+        m_node->declare_parameter("pulse_dif");
+        m_node->declare_parameter("sample_rate");
+        
+        
+        near_noise_dist = (m_node->get_parameter("near_noise_dist")).as_int();
+        near_noise_intensity =(m_node->get_parameter("near_noise_intensity")).as_int();
+        time_dif = (m_node->get_parameter("time_dif")).as_int();
+        high_pul = (m_node->get_parameter("high_pul")).as_int();
+        time_fly =  (m_node->get_parameter("time_fly")).as_int();
+        pulse_dif = (m_node->get_parameter("pulse_dif")).as_int();
+        sample_rate =  (m_node->get_parameter("sample_rate")).as_int();
 
-        m_auto_start =
-            m_node->get_parameter<bool>("/onet_lidar_ros_driver/auto_start", m_auto_start);
-        m_save_bag = m_node->get_parameter<bool>("/onet_lidar_ros_driver/save_bag", m_save_bag);
-        m_point_cloud_topic_name = m_node->get_parameter<std::string>(
-            "/onet_lidar_ros_driver/point_cloud_topic_name", m_point_cloud_topic_name);
-        m_device_ip =
-            m_node->get_parameter<std::string>("/onet_lidar_ros_driver/device_ip", m_device_ip);
-        m_port = m_node->get_parameter<int>("/onet_lidar_ros_driver/port", m_port);
-        m_frame_id =
-            m_node->get_parameter<std::string>("/onet_lidar_ros_driver/frame_id", m_frame_id);
-        m_playback_file_path = m_node->get_parameter<std::string>(
-            "/onet_lidar_ros_driver/playback_file_path", m_playback_file_path);
+        m_auto_start =(m_node->get_parameter("auto_start")).as_bool();
+        m_save_bag = (m_node->get_parameter("save_bag")).as_bool();
+        m_point_cloud_topic_name = (m_node->get_parameter("point_cloud_topic_name")).as_string();
+        m_device_ip =(m_node->get_parameter("device_ip")).as_string();
+        m_port =(m_node->get_parameter("port")).as_int();
+        m_frame_id = (m_node->get_parameter("frame_id")).as_string();
+        m_playback_file_path = (m_node->get_parameter("playback_file_path")).as_string();   
     }
 
     Impl(rclcpp::Node::SharedPtr node) : m_node(node)
