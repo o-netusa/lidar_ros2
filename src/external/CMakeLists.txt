@@ -26,11 +26,11 @@ message("==> Configuring lidardevice")
 download_project(
   PROJ     lidardevice
   URL      ${CMAKE_CURRENT_SOURCE_DIR}/lidardevice/LidarDevice-1.0.0-Linux.tar.gz
-  URL_HASH MD5=0831f6991d916a6534aa13fe5d464106
+  URL_HASH MD5=d7df7b1c79fdfd8c1165636928412332
   QUIET
 )
 add_library(lidardevice INTERFACE)
 target_include_directories(lidardevice INTERFACE ${lidardevice_SOURCE_DIR}/include)
 target_link_directories(lidardevice INTERFACE ${lidardevice_SOURCE_DIR}/lib)
-target_link_libraries(lidardevice INTERFACE LidarDeviceStatic eigen sigslot stduuid)
+target_link_libraries(lidardevice INTERFACE LidarDevice eigen sigslot stduuid)
 set(lidardevice_SOURCE_DIR ${lidardevice_SOURCE_DIR} CACHE STRING "")

@@ -2,6 +2,7 @@ build/
 devel/
 install/
 output/
+log/
 /toolchain
 .vs/
 .vscode/
