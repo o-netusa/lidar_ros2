@@ -25,7 +25,9 @@
 #include <sensor_msgs/point_cloud_conversion.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <thread>
-
+#include "rcpputils/filesystem_helper.hpp"
+#include <filesystem>
+namespace fs = std::filesystem;
 namespace onet { namespace lidar_ros {
 
 static onet::lidar::PlaybackDevice *GetPlaybackDevice(const std::vector<std::string> &file_list)
@@ -144,7 +146,13 @@ struct LidarRosDriver::Impl
         if (m_save_bag)
         {
             rosbag2_cpp::StorageOptions storage_options;
-            storage_options.uri = "file:///tmp/lidar_ros_driver.bag";
+            storage_options.uri = "lidar_bag";
+            auto rosbag_directory = rcpputils::fs::path( storage_options.uri);
+            rcpputils::fs::remove_all(rosbag_directory);
+            fs::path current_path = fs::current_path() ;
+            current_path /="lidar_bag";
+            fs::create_directory(current_path);
+            storage_options.storage_id = "sqlite3";
             rosbag2_cpp::ConverterOptions converter_options;
             m_rosbag_writer.open(storage_options, converter_options);
             rosbag2_storage::TopicMetadata tm;

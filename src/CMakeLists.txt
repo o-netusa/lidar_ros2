@@ -16,7 +16,7 @@ find_package(rclcpp REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(sensor_msgs REQUIRED)
-
+find_package(rcpputils REQUIRED)
 set(PARAMETER_FLAG_INCLUDE "${CMAKE_SOURCE_DIR}/lidar_ros_driver")
 
 
