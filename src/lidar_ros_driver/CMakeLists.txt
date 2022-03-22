@@ -20,7 +20,7 @@ install(FILES ${lidardevice_SOURCE_DIR}/lib/libLidarDevice.so DESTINATION lib/${
 
 # install config and launch files
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/config DESTINATION lib/${PROJECT_NAME})
-install(FILES ${CMAKE_SOURCE_DIR}/launch/run.launch.py DESTINATION .)
+install(FILES ${CMAKE_SOURCE_DIR}/launch/run.launch.py DESTINATION ./share/${PROJECT_NAME})
 
 # install license and readme
 install(FILES ${CMAKE_SOURCE_DIR}/../LICENSE.txt DESTINATION lib/${PROJECT_NAME}/../)

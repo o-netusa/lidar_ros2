@@ -26,7 +26,7 @@ message("==> Configuring lidardevice")
 download_project(
   PROJ     lidardevice
   URL      ${CMAKE_CURRENT_SOURCE_DIR}/lidardevice/LidarDevice-1.0.0-Linux.tar.gz
-  URL_HASH MD5=d7df7b1c79fdfd8c1165636928412332
+  URL_HASH MD5=a6fc261ce5ea566b67566dfcd00cfbf0
   QUIET
 )
 add_library(lidardevice INTERFACE)
