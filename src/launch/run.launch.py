@@ -6,6 +6,7 @@ import launch_ros.actions
 
 
 def generate_launch_description():
+    build_path = os.getcwd() + "/install/lidar_ros_driver/lib/lidar_ros_driver"
     ld = launch.LaunchDescription([
          launch.actions.DeclareLaunchArgument(
             name='rviz2',
@@ -25,7 +26,7 @@ def generate_launch_description():
             output='screen',
             emulate_tty=True,
             # prefix=['xterm -e gdb -ex run --args'],
-            cwd=['/home/fanghaiguo/Branch/lidar_ros2.2/lidar_ros/install/lidar_ros_driver/lib/lidar_ros_driver'],
+            cwd=[build_path],
             parameters=[
                 {"point_cloud_topic_name":'lidar_point_cloud'},
                 {"frame_id":'lidar'},
