@@ -76,13 +76,13 @@ struct LidarRosDriver::Impl
     std::string m_playback_file_path;
     int m_playback_fps{10};
 
-    int near_noise_dist{0};
-    int near_noise_intensity{0};
-    int time_dif{0};
-    int high_pul{0};
-    int time_fly{0};
-    int pulse_dif{0};
-    int sample_rate{0};
+    int m_near_noise_dist{0};
+    int m_near_noise_intensity{0};
+    int m_time_dif{0};
+    int m_high_pul{0};
+    int m_time_fly{0};
+    int m_pulse_dif{0};
+    int m_sample_rate{0};
 
     std::function<void(uint32_t, onet::lidar::PointCloud<onet::lidar::PointXYZI> &)> m_callback{
         nullptr};
@@ -110,13 +110,13 @@ struct LidarRosDriver::Impl
         m_node->declare_parameter("sample_rate");
         
         
-        near_noise_dist = (m_node->get_parameter("near_noise_dist")).as_int();
-        near_noise_intensity =(m_node->get_parameter("near_noise_intensity")).as_int();
-        time_dif = (m_node->get_parameter("time_dif")).as_int();
-        high_pul = (m_node->get_parameter("high_pul")).as_int();
-        time_fly =  (m_node->get_parameter("time_fly")).as_int();
-        pulse_dif = (m_node->get_parameter("pulse_dif")).as_int();
-        sample_rate =  (m_node->get_parameter("sample_rate")).as_int();
+        m_near_noise_dist = (m_node->get_parameter("near_noise_dist")).as_int();
+        m_near_noise_intensity =(m_node->get_parameter("near_noise_intensity")).as_int();
+        m_time_dif = (m_node->get_parameter("time_dif")).as_int();
+        m_high_pul = (m_node->get_parameter("high_pul")).as_int();
+        m_time_fly =  (m_node->get_parameter("time_fly")).as_int();
+        m_pulse_dif = (m_node->get_parameter("pulse_dif")).as_int();
+        m_sample_rate =  (m_node->get_parameter("sample_rate")).as_int();
 
         m_auto_start =(m_node->get_parameter("auto_start")).as_bool();
         m_save_bag = (m_node->get_parameter("save_bag")).as_bool();
@@ -277,27 +277,27 @@ struct LidarRosDriver::Impl
                 {
                     //删除近处杂点
                     lidar::RegisterData data;
-                    data.parameters[0] = near_noise_dist;
-                    data.parameters[1] = near_noise_intensity;
+                    data.parameters[0] = m_near_noise_dist;
+                    data.parameters[1] = m_near_noise_intensity;
                     m_lidar_device->SetRegisterParameter(lidar::TDC_GPX_REG6, data);
                 }
                 {
                     //删除远处重影
                     lidar::RegisterData data;
-                    data.parameters[0] = pulse_dif;
-                    data.parameters[1] = time_fly;
+                    data.parameters[0] = m_pulse_dif;
+                    data.parameters[1] = m_time_fly;
                     m_lidar_device->SetRegisterParameter(lidar::TDC_GPX_REG5, data);
                 }
                 {
                     lidar::RegisterData data;
-                    data.parameters[0] = high_pul;
-                    data.parameters[1] = time_dif;
+                    data.parameters[0] = m_high_pul;
+                    data.parameters[1] = m_time_dif;
                     m_lidar_device->SetRegisterParameter(lidar::TDC_GPX_REG4, data);
                 }
                 {
                     //设置采样频率
                     lidar::RegisterData data;
-                    data.parameters[0] = sample_rate;
+                    data.parameters[0] = m_sample_rate;
                     m_lidar_device->SetRegisterParameter(lidar::TDC_GPX_REG0, data);
                 }
                 m_lidar_device->RegisterPointCloudCallback(m_callback);
