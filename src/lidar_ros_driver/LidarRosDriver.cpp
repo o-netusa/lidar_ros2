@@ -15,8 +15,8 @@
 #include <common/FileSystem.h>
 #include <common/Timer.h>
 #include <config/DeviceParamsConfig.h>
-
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/serialization.hpp>
 #include <rosbag2_cpp/writer.hpp>
 #include <rosbag2_cpp/writers/sequential_writer.hpp>
 #include <rosbag2_storage/ros_helper.hpp>
@@ -153,11 +153,12 @@ struct LidarRosDriver::Impl
             current_path /="lidar_bag";
             fs::create_directory(current_path);
             storage_options.storage_id = "sqlite3";
-            rosbag2_cpp::ConverterOptions converter_options;
+            rosbag2_cpp::ConverterOptions converter_options({rmw_get_serialization_format(),rmw_get_serialization_format()});
             m_rosbag_writer.open(storage_options, converter_options);
             rosbag2_storage::TopicMetadata tm;
             tm.name = m_point_cloud_topic_name;
             tm.type = "sensor_msgs/msg/PointCloud2";
+            tm.serialization_format = rmw_get_serialization_format();
             m_rosbag_writer.create_topic(tm);
         }
         if (m_auto_start)
@@ -211,10 +212,13 @@ struct LidarRosDriver::Impl
         if (m_save_bag)
         {
             auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+            auto serializer = rclcpp::Serialization<sensor_msgs::msg::PointCloud2>();
+            auto rclcpp_serialized_msg = rclcpp::SerializedMessage();
+            serializer.serialize_message(&pointcloud2,&rclcpp_serialized_msg);
             rcutils_system_time_now(&bag_message->time_stamp);
             bag_message->topic_name = m_point_cloud_topic_name;
-            bag_message->serialized_data = rosbag2_storage::make_serialized_message(
-                pointcloud2.data.data(), pointcloud2.row_step * pointcloud2.height);
+            bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
+                &rclcpp_serialized_msg.get_rcl_serialized_message(),[](rcutils_uint8_array_t * /* data */) {});
             m_rosbag_writer.write(bag_message);
         }
     }
