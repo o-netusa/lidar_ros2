@@ -32,7 +32,7 @@ def generate_launch_description():
                 {"frame_id":'lidar'},
                 {"device_ip":'192.168.1.2'},
                 {"port":2368},
-                {"playback_file_path":"/home/fanghaiguo/Branch/lidar_ros2.2/lidar_ros/Source000063.dp"},
+                {"playback_file_path":""}, # leave empty if using device
                 {"auto_start":True},
                 {"save_bag":True},
                 {"near_noise_dist":19200},

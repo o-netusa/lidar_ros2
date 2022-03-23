@@ -20,9 +20,8 @@
 #include <rosbag2_cpp/writer.hpp>
 #include <rosbag2_cpp/writers/sequential_writer.hpp>
 #include <rosbag2_storage/ros_helper.hpp>
-#include <sensor_msgs/msg/point_cloud.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sensor_msgs/point_cloud_conversion.hpp>
+#include <pcl_conversions/pcl_conversions.h>
 #include <std_msgs/msg/string.hpp>
 #include <thread>
 #include "rcpputils/filesystem_helper.hpp"
@@ -188,33 +187,31 @@ struct LidarRosDriver::Impl
             return;
         }
         cppbase::TimerUs timer;
-        sensor_msgs::msg::PointCloud pointcloud;
-        pointcloud.header.stamp = m_node->now();
-        pointcloud.header.frame_id = m_frame_id;
+        pcl::PointCloud<pcl::PointXYZI> pointcloud;
         pointcloud.points.resize(cloud.size());
-        pointcloud.channels.resize(1);
-        pointcloud.channels[0].name = "intensity";
-        pointcloud.channels[0].values.resize(cloud.size());
-        for (size_t i = 0; i < cloud.size(); i++)
+        for (size_t i = 0; i < cloud.size(); ++i)
         {
             const auto &pt = cloud.at(i);
             pointcloud.points[i].x = pt[0];
             pointcloud.points[i].y = pt[1];
             pointcloud.points[i].z = pt[2];
-            pointcloud.channels[0].values[i] = pt[3];
+            pointcloud.points[i].intensity = pt[3];
         }
+        sensor_msgs::msg::PointCloud2 msg_pointcloud;
+        pcl::toROSMsg(pointcloud, msg_pointcloud);
+        msg_pointcloud.header.stamp = m_node->now();
+        msg_pointcloud.header.frame_id = m_frame_id;
+
         RCLCPP_INFO(m_node->get_logger(), "end time:%d us", static_cast<int>(timer.Elapsed()));
         timer.Stop();
-        // convert pointcloud to pointcloud2
-        sensor_msgs::msg::PointCloud2 pointcloud2;
-        sensor_msgs::convertPointCloudToPointCloud2(pointcloud, pointcloud2);
-        m_cloud_pub->publish(pointcloud2);
+
+        m_cloud_pub->publish(msg_pointcloud);
         if (m_save_bag)
         {
             auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
             auto serializer = rclcpp::Serialization<sensor_msgs::msg::PointCloud2>();
             auto rclcpp_serialized_msg = rclcpp::SerializedMessage();
-            serializer.serialize_message(&pointcloud2,&rclcpp_serialized_msg);
+            serializer.serialize_message(&msg_pointcloud,&rclcpp_serialized_msg);
             rcutils_system_time_now(&bag_message->time_stamp);
             bag_message->topic_name = m_point_cloud_topic_name;
             bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(

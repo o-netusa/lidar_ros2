@@ -27,13 +27,13 @@ nightly_linux:
     - chmod 700 ~/.ssh
     - ssh-keyscan -t rsa -p 2222 192.168.10.1 >> ~/.ssh/known_hosts
   script:
-    - rm -rf build devel
+    - rm -rf build install
     - colcon build
 
 build_linux:
   image: onet/lidar:ros_foxy
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
   stage: build
   tags:
     - ros
@@ -44,5 +44,5 @@ build_linux:
     - chmod 700 ~/.ssh
     - ssh-keyscan -t rsa -p 2222 192.168.10.1 >> ~/.ssh/known_hosts
   script:
-    - rm -rf build devel
+    - rm -rf build install
     - colcon build

@@ -17,7 +17,8 @@ find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(rcpputils REQUIRED)
-set(PARAMETER_FLAG_INCLUDE "${CMAKE_SOURCE_DIR}/lidar_ros_driver")
+find_package(pcl_ros REQUIRED)
+find_package(pcl_conversions REQUIRED)
 
 
 ###########
@@ -25,7 +26,6 @@ set(PARAMETER_FLAG_INCLUDE "${CMAKE_SOURCE_DIR}/lidar_ros_driver")
 ###########
 include_directories(
   ${CPPBASE_INCLUDE_DIR}
-  ${PARAMETER_FLAG_INCLUDE}
 )
 
 add_subdirectory(lidar_ros_driver)
@@ -39,5 +39,5 @@ if(BUILD_TESTING)
     add_subdirectory(tests)
 endif()
 
-ament_export_dependencies(sensor_msgs rosbag2)
+ament_export_dependencies(sensor_msgs rosbag2 pcl_ros pcl_conversions)
 ament_package()

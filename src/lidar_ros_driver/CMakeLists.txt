@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 add_library(lidar_ros LidarRosDriver.cpp)
 target_compile_features(lidar_ros PRIVATE ${CXX_STD})
-target_link_libraries(lidar_ros PUBLIC lidardevice ${rclcpp_LIBRARIES} ${rosbag2_cpp_LIBRARIES} ${rosbag2_storage_LIBRARIES} ${sensor_msgs_LIBRARIES} ${rcpputils_LIBRARIES})
+target_link_libraries(lidar_ros PUBLIC lidardevice ${rclcpp_LIBRARIES} ${rosbag2_cpp_LIBRARIES} ${rosbag2_storage_LIBRARIES} ${sensor_msgs_LIBRARIES} ${rcpputils_LIBRARIES} ${pcl_ros_LIBRARIES} ${pcl_conversions_LIBRARIES})
 
 add_executable(lidar_ros_driver LidarRosNode.cpp)
 target_compile_features(lidar_ros_driver PRIVATE ${CXX_STD})
