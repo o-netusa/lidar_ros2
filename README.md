@@ -8,5 +8,7 @@
 * cd into the repo directory and execute `colcon build`
 
 ## Launch the ROS node
-* After building, set environment using `source install/setup.bash` and execute `ros2 launch lidar_ros_device run.launch.py`
+* After building, set environment using `source install/setup.bash` 
+* Add LD_LIBRARY_PATH using `export LD_LIBRARY_PATH=$(pwd)/install/lidar_ros_driver/lib/lidar_ros_driver:$LD_LIBRARY_PATH`
+* Execute `ros2 launch lidar_ros_device run.launch.py`
 
