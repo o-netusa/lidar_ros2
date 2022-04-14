@@ -34,14 +34,6 @@ def generate_launch_description():
                 {"port":2368},
                 {"playback_file_path":""}, # leave empty if using device
                 {"auto_start":True},
-                {"save_bag":True},
-                {"near_noise_dist":19200},
-                {"near_noise_intensity":135},
-                {"time_dif":200},
-                {"high_pul":350},
-                {"time_fly":19200},
-                {"pulse_dif":124},
-                {"sample_rate":500}
             ]
         )
     ])

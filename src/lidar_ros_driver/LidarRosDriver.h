@@ -19,9 +19,6 @@ class LidarRosDriver
 public:
     LidarRosDriver(rclcpp::Node::SharedPtr node);
     ~LidarRosDriver() = default;
-    bool IsRunning() const;
-    void UpdateParameter();
-    void Run();
 
 private:
     struct Impl;

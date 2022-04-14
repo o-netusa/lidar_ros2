@@ -15,17 +15,16 @@
 #include <common/FileSystem.h>
 #include <common/Timer.h>
 #include <config/DeviceParamsConfig.h>
+#include <pcl_conversions/pcl_conversions.h>
+
+#include <filesystem>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/serialization.hpp>
-#include <rosbag2_cpp/writer.hpp>
-#include <rosbag2_cpp/writers/sequential_writer.hpp>
-#include <rosbag2_storage/ros_helper.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <pcl_conversions/pcl_conversions.h>
 #include <std_msgs/msg/string.hpp>
 #include <thread>
+
 #include "rcpputils/filesystem_helper.hpp"
-#include <filesystem>
 namespace fs = std::filesystem;
 namespace onet { namespace lidar_ros {
 
@@ -55,18 +54,8 @@ static onet::lidar::LidarDevice *GetLidarDevice(const std::string &strIP, int po
 
 struct LidarRosDriver::Impl
 {
-    bool m_running{true};
-    bool m_auto_start{true};
-    bool m_save_bag{false};
-    std::string m_update_parameter;
-    // rosbag2 example:
-    // https://github.com/ros2/rosbag2/blob/master/rosbag2_tests/test/rosbag2_tests/test_rosbag2_cpp_api.cpp
-    rosbag2_cpp::Writer m_rosbag_writer{
-        std::move(std::make_unique<rosbag2_cpp::writers::SequentialWriter>())};
     rclcpp::Node::SharedPtr m_node;                                                 //节点
     std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>> m_cloud_pub;  //点云发布者
-    // rclcpp::Publisher m_param_pub;  //参数设置状态发布者
-    // rclcpp::ServiceServer m_service;  // connect参数设置状态
 
     std::string m_point_cloud_topic_name{"lidar_point_cloud"};
     std::string m_frame_id{"lidar"};
@@ -75,55 +64,25 @@ struct LidarRosDriver::Impl
     std::string m_playback_file_path;
     int m_playback_fps{10};
 
-    int m_near_noise_dist{0};
-    int m_near_noise_intensity{0};
-    int m_time_dif{0};
-    int m_high_pul{0};
-    int m_time_fly{0};
-    int m_pulse_dif{0};
-    int m_sample_rate{0};
-
     std::function<void(uint32_t, onet::lidar::PointCloud<onet::lidar::PointXYZI> &)> m_callback{
         nullptr};
 
     lidar::LidarDevice *m_lidar_device{nullptr};
     lidar::PlaybackDevice *m_playback_device{nullptr};
-    std::shared_ptr<onet::lidar::DlphDeviceParameter> m_dev_param;
 
     void InitLidar()
     {
-        m_node->declare_parameter("rviz2");
-        m_node->declare_parameter("point_cloud_topic_name");
-        m_node->declare_parameter("frame_id");
-        m_node->declare_parameter("device_ip");
-        m_node->declare_parameter("port");
-        m_node->declare_parameter("playback_file_path");
-        m_node->declare_parameter("auto_start");
-        m_node->declare_parameter("save_bag");
-        m_node->declare_parameter("near_noise_dist");
-        m_node->declare_parameter("near_noise_intensity");
-        m_node->declare_parameter("time_dif");
-        m_node->declare_parameter("high_pul");
-        m_node->declare_parameter("time_fly");
-        m_node->declare_parameter("pulse_dif");
-        m_node->declare_parameter("sample_rate");
-        
-        
-        m_near_noise_dist = (m_node->get_parameter("near_noise_dist")).as_int();
-        m_near_noise_intensity =(m_node->get_parameter("near_noise_intensity")).as_int();
-        m_time_dif = (m_node->get_parameter("time_dif")).as_int();
-        m_high_pul = (m_node->get_parameter("high_pul")).as_int();
-        m_time_fly =  (m_node->get_parameter("time_fly")).as_int();
-        m_pulse_dif = (m_node->get_parameter("pulse_dif")).as_int();
-        m_sample_rate =  (m_node->get_parameter("sample_rate")).as_int();
+        m_node->declare_parameter<std::string>("point_cloud_topic_name", m_point_cloud_topic_name);
+        m_node->declare_parameter<std::string>("frame_id", m_frame_id);
+        m_node->declare_parameter<std::string>("device_ip", m_device_ip);
+        m_node->declare_parameter<int>("port", m_port);
+        m_node->declare_parameter<std::string>("playback_file_path", m_playback_file_path);
 
-        m_auto_start =(m_node->get_parameter("auto_start")).as_bool();
-        m_save_bag = (m_node->get_parameter("save_bag")).as_bool();
         m_point_cloud_topic_name = (m_node->get_parameter("point_cloud_topic_name")).as_string();
-        m_device_ip =(m_node->get_parameter("device_ip")).as_string();
-        m_port =(m_node->get_parameter("port")).as_int();
+        m_device_ip = (m_node->get_parameter("device_ip")).as_string();
+        m_port = (m_node->get_parameter("port")).as_int();
         m_frame_id = (m_node->get_parameter("frame_id")).as_string();
-        m_playback_file_path = (m_node->get_parameter("playback_file_path")).as_string();   
+        m_playback_file_path = (m_node->get_parameter("playback_file_path")).as_string();
     }
 
     Impl(rclcpp::Node::SharedPtr node) : m_node(node)
@@ -142,28 +101,8 @@ struct LidarRosDriver::Impl
         m_callback = [this](uint32_t frame_id, lidar::PointCloud<lidar::PointXYZI> &cloud) {
             HandlePointCloud(frame_id, cloud);
         };
-        if (m_save_bag)
-        {
-            rosbag2_cpp::StorageOptions storage_options;
-            storage_options.uri = "lidar_bag";
-            auto rosbag_directory = rcpputils::fs::path( storage_options.uri);
-            rcpputils::fs::remove_all(rosbag_directory);
-            fs::path current_path = fs::current_path() ;
-            current_path /="lidar_bag";
-            fs::create_directory(current_path);
-            storage_options.storage_id = "sqlite3";
-            rosbag2_cpp::ConverterOptions converter_options({rmw_get_serialization_format(),rmw_get_serialization_format()});
-            m_rosbag_writer.open(storage_options, converter_options);
-            rosbag2_storage::TopicMetadata tm;
-            tm.name = m_point_cloud_topic_name;
-            tm.type = "sensor_msgs/msg/PointCloud2";
-            tm.serialization_format = rmw_get_serialization_format();
-            m_rosbag_writer.create_topic(tm);
-        }
-        if (m_auto_start)
-        {
-            Run();
-        }
+
+        Run();
     }
 
     ~Impl()
@@ -206,18 +145,6 @@ struct LidarRosDriver::Impl
         timer.Stop();
 
         m_cloud_pub->publish(msg_pointcloud);
-        if (m_save_bag)
-        {
-            auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-            auto serializer = rclcpp::Serialization<sensor_msgs::msg::PointCloud2>();
-            auto rclcpp_serialized_msg = rclcpp::SerializedMessage();
-            serializer.serialize_message(&msg_pointcloud,&rclcpp_serialized_msg);
-            rcutils_system_time_now(&bag_message->time_stamp);
-            bag_message->topic_name = m_point_cloud_topic_name;
-            bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
-                &rclcpp_serialized_msg.get_rcl_serialized_message(),[](rcutils_uint8_array_t * /* data */) {});
-            m_rosbag_writer.write(bag_message);
-        }
     }
 
     /**
@@ -263,44 +190,7 @@ struct LidarRosDriver::Impl
             try
             {
                 m_lidar_device->Init();
-                LidarParameter lidar_param = m_lidar_device->GetLidarParameter();
-                {
-                    lidar::RegisterData close_laser_param;
-                    close_laser_param.parameters[0] = 0;
-                    close_laser_param.parameters[1] = 0;
-                    close_laser_param.parameters[2] = lidar_param.laser.factor;
-                    close_laser_param.parameters[3] = lidar_param.laser.level;
-                    close_laser_param.parameters[4] = lidar_param.laser.pulse_width;
-                    m_lidar_device->SetRegisterParameter(lidar::LASER_CTL, close_laser_param);
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-                m_lidar_device->SetLaser(lidar_param.laser);
-                {
-                    //删除近处杂点
-                    lidar::RegisterData data;
-                    data.parameters[0] = m_near_noise_dist;
-                    data.parameters[1] = m_near_noise_intensity;
-                    m_lidar_device->SetRegisterParameter(lidar::TDC_GPX_REG6, data);
-                }
-                {
-                    //删除远处重影
-                    lidar::RegisterData data;
-                    data.parameters[0] = m_pulse_dif;
-                    data.parameters[1] = m_time_fly;
-                    m_lidar_device->SetRegisterParameter(lidar::TDC_GPX_REG5, data);
-                }
-                {
-                    lidar::RegisterData data;
-                    data.parameters[0] = m_high_pul;
-                    data.parameters[1] = m_time_dif;
-                    m_lidar_device->SetRegisterParameter(lidar::TDC_GPX_REG4, data);
-                }
-                {
-                    //设置采样频率
-                    lidar::RegisterData data;
-                    data.parameters[0] = m_sample_rate;
-                    m_lidar_device->SetRegisterParameter(lidar::TDC_GPX_REG0, data);
-                }
+
                 m_lidar_device->RegisterPointCloudCallback(m_callback);
                 if (!m_lidar_device->Start())
                 {
@@ -318,20 +208,5 @@ struct LidarRosDriver::Impl
 LidarRosDriver::LidarRosDriver(rclcpp::Node::SharedPtr node)
     : m_impl(std::make_shared<LidarRosDriver::Impl>(node))
 {}
-
-void LidarRosDriver::UpdateParameter()
-{
-    // m_impl->UpdateParameter();
-}
-
-bool LidarRosDriver::IsRunning() const
-{
-    return m_impl->m_running;
-}
-
-void LidarRosDriver::Run()
-{
-    m_impl->Run();
-}
 
 }}  // namespace onet::lidar_ros
