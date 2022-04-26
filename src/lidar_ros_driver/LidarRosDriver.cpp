@@ -17,17 +17,16 @@
 #include <config/DeviceParamsConfig.h>
 // #include <pcl_conversions/pcl_conversions.h>
 
-#include <filesystem>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/serialization.hpp>
 #include <sensor_msgs/msg/point_cloud.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud_conversion.hpp>
 #include <std_msgs/msg/string.hpp>
-#include <thread>   
+#include <thread>
 
 #include "rcpputils/filesystem_helper.hpp"
-namespace fs = std::filesystem;
+
 namespace onet { namespace lidar_ros {
 
 static onet::lidar::PlaybackDevice *GetPlaybackDevice(const std::vector<std::string> &file_list)
@@ -150,7 +149,7 @@ struct LidarRosDriver::Impl
         m_cloud_pub->publish(pointcloud2);
 
         RCLCPP_INFO(m_node->get_logger(), "end time:%d us", static_cast<int>(timer.Elapsed()));
-        timer.Stop();   
+        timer.Stop();
     }
 
     /**
