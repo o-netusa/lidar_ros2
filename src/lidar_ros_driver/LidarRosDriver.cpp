@@ -15,14 +15,16 @@
 #include <common/FileSystem.h>
 #include <common/Timer.h>
 #include <config/DeviceParamsConfig.h>
-#include <pcl_conversions/pcl_conversions.h>
+// #include <pcl_conversions/pcl_conversions.h>
 
 #include <filesystem>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/serialization.hpp>
+#include <sensor_msgs/msg/point_cloud.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud_conversion.hpp>
 #include <std_msgs/msg/string.hpp>
-#include <thread>
+#include <thread>   
 
 #include "rcpputils/filesystem_helper.hpp"
 namespace fs = std::filesystem;
@@ -126,25 +128,29 @@ struct LidarRosDriver::Impl
             return;
         }
         cppbase::TimerUs timer;
-        pcl::PointCloud<pcl::PointXYZI> pointcloud;
+        sensor_msgs::msg::PointCloud pointcloud;
+        pointcloud.header.stamp = m_node->now();
+        pointcloud.header.frame_id = m_frame_id;
         pointcloud.points.resize(cloud.size());
-        for (size_t i = 0; i < cloud.size(); ++i)
+        pointcloud.channels.resize(1);
+        pointcloud.channels[0].name = "intensity";
+        pointcloud.channels[0].values.resize(cloud.size());
+
+        for (size_t i = 0; i < cloud.size(); i++)
         {
             const auto &pt = cloud.at(i);
             pointcloud.points[i].x = pt[0];
             pointcloud.points[i].y = pt[1];
             pointcloud.points[i].z = pt[2];
-            pointcloud.points[i].intensity = pt[3];
+            pointcloud.channels[0].values[i] = pt[3];
         }
-        sensor_msgs::msg::PointCloud2 msg_pointcloud;
-        pcl::toROSMsg(pointcloud, msg_pointcloud);
-        msg_pointcloud.header.stamp = m_node->now();
-        msg_pointcloud.header.frame_id = m_frame_id;
+        // convert pointcloud to pointcloud2
+        sensor_msgs::msg::PointCloud2 pointcloud2;
+        sensor_msgs::convertPointCloudToPointCloud2(pointcloud, pointcloud2);
+        m_cloud_pub->publish(pointcloud2);
 
         RCLCPP_INFO(m_node->get_logger(), "end time:%d us", static_cast<int>(timer.Elapsed()));
-        timer.Stop();
-
-        m_cloud_pub->publish(msg_pointcloud);
+        timer.Stop();   
     }
 
     /**

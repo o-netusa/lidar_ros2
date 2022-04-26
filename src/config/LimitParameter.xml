@@ -23,4 +23,8 @@
     <PermissionsParameter>
         <Permissions>2</Permissions>
     </PermissionsParameter>
+     <PulseLimitParameter>
+        <MaxPluse>200</MaxPulse>
+        <MinPluse>700</MinPulse>
+    </PulseLimitParameter>
 </LimitParameterInfo>
