@@ -24,19 +24,31 @@ set(CPPBASE_INCLUDE_DIR ${cppbase_SOURCE_DIR} CACHE STRING "")
 #
 message("==> Configuring lidardevice")
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
+message("==> Configuring lidardevice x86_64")
 download_project(
   PROJ     lidardevice
   URL      ${CMAKE_CURRENT_SOURCE_DIR}/lidardevice/LidarDevice-1.0.0-x86_64_Linux.tar.gz
   URL_HASH MD5=49ee3656411f6a663c91bc1978b01e4d  
   QUIET
 )
-else ()
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "(aarch64)")
+message("==> Configuring lidardevice aarch")
 download_project(
   PROJ     lidardevice
-  URL      ${CMAKE_CURRENT_SOURCE_DIR}/lidardevice/LidarDevice-1.0.0-arm64_Linux.tar.gz
+  URL      ${CMAKE_CURRENT_SOURCE_DIR}/lidardevice/LidarDevice-1.0.0-aarch64_Linux.tar.gz
+  URL_HASH MD5=2abb335c4765b6e7fdb62716d3633578  
+  QUIET
+)
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "(arm)")
+message("==> Configuring lidardevice arm")
+download_project(
+  PROJ     lidardevice
+  URL      ${CMAKE_CURRENT_SOURCE_DIR}/lidardevice/LidarDevice-1.0.0-arm_Linux.tar.gz
   URL_HASH MD5=7754bea02e4f3dd51b9a46df6a7bc595  
   QUIET
 )
+else ()
+message("The architecture is not support!")
 endif ()
 
 add_library(lidardevice INTERFACE)
