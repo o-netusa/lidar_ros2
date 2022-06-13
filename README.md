@@ -19,10 +19,11 @@ export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:[path]/ros2_galactic/install/rclcp
 export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:[path]/onet/ros2_galactic/install/sensor_msgs/include
 
 ___
-样例设置步骤
+# O-Net 雷达 ROS2 驱动
+* 该驱动适用于 ROS2 galactic (Ubuntu18.04)
+* 适用平台 x86_64, arm, aarch64
 
-1. 设置IP（5号机为例）注意雷达ip
-
+# 设置IP（5号机为例）注意雷达ip
 
 电脑端172.18.0.53，255.255.255.0
 雷达端 src/launch/run.launch.py
@@ -30,7 +31,7 @@ ___
 Parameters = [{"device_ip": "172.18.0.56”}]
 ```
 
-2. 编译lidar_ros
+# 编译lidar_ros
 
 ```
 cd lidar_ros
@@ -39,20 +40,18 @@ cd lidar_ros
 注意home/onet改成你自己的电脑的
 ```
 export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/home/onet/ros2_galactic/install/rclcpp/include
-
 export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/home/onet/ros2_galactic/install/sensor_msgs/include
-
 colcon build
 ```
 
-3. 启动lidar_ros
+# 启动lidar_ros
 ```
 source install/setup.bash
 export LD_LIBRARY_PATH=$(pwd)/install/lidar_ros_driver/lib/lidar_ros_driver:$LD_LIBRARY_PATH
 ros2 launch lidar_ros_driver run.launch.py
 ```
 
-4. 启动点云显示
+# 启动点云显示
 
 重开终端窗口
 ```
