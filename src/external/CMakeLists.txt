@@ -28,7 +28,7 @@ message("==> Configuring lidardevice x86_64")
 download_project(
   PROJ     lidardevice
   URL      ${CMAKE_CURRENT_SOURCE_DIR}/lidardevice/LidarDevice-1.0.0-x86_64_Linux.tar.gz
-  URL_HASH MD5=49ee3656411f6a663c91bc1978b01e4d  
+  URL_HASH MD5=b3beefb28032ba95e085ea3d42819aa9   
   QUIET
 )
 elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "(aarch64)")
@@ -36,7 +36,7 @@ message("==> Configuring lidardevice aarch")
 download_project(
   PROJ     lidardevice
   URL      ${CMAKE_CURRENT_SOURCE_DIR}/lidardevice/LidarDevice-1.0.0-aarch64_Linux.tar.gz
-  URL_HASH MD5=2abb335c4765b6e7fdb62716d3633578  
+  URL_HASH MD5=bfad1cce58e88a5b9293cf14e3370512 
   QUIET
 )
 elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "(arm)")

@@ -1,36 +1,36 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <CheckParameterInfo>
     <CheckParameter>
-        <Check_Alphal_R>0.0491787191</Check_Alphal_R>
-        <Check_Theta_R>10.8740668680</Check_Theta_R>
-        <Check_Roll_R>0.6219675331</Check_Roll_R>
-        <Check_Pitch_R>-0.7481697876</Check_Pitch_R>
-        <Check_Yaw_R>-3.6222045740</Check_Yaw_R>
-        <Check_Alphal_L>1.3577656829</Check_Alphal_L>
-        <Check_Theta_L>10.8685548699</Check_Theta_L>
-        <Check_Roll_L>0.6219675331</Check_Roll_L>
-        <Check_Pitch_L>-0.7481697876</Check_Pitch_L>
-        <Check_Yaw_L>-3.6222045740</Check_Yaw_L>
-        <Check_Rotator_Roll>0.6151099168</Check_Rotator_Roll>
-        <Check_Rotator_Pitch>0.1449975875</Check_Rotator_Pitch>
-        <Check_Rotator_Yaw>-4.5074530979</Check_Rotator_Yaw>
+        <Check_Alphal_R>0</Check_Alphal_R>
+        <Check_Theta_R>0.0000000000</Check_Theta_R>
+        <Check_Roll_R>0</Check_Roll_R>
+        <Check_Pitch_R>0</Check_Pitch_R>
+        <Check_Yaw_R>0</Check_Yaw_R>
+        <Check_Alphal_L>0</Check_Alphal_L>
+        <Check_Theta_L>0</Check_Theta_L>
+        <Check_Roll_L>0</Check_Roll_L>
+        <Check_Pitch_L>0</Check_Pitch_L>
+        <Check_Yaw_L>0</Check_Yaw_L>
+        <Check_Rotator_Roll>0</Check_Rotator_Roll>
+        <Check_Rotator_Pitch>0</Check_Rotator_Pitch>
+        <Check_Rotator_Yaw>0</Check_Rotator_Yaw>
         <Check_Rotator_Angle_Offset>0</Check_Rotator_Angle_Offset>
-        <Check_Rotator_Mirror_Theta_1>1.2308419856</Check_Rotator_Mirror_Theta_1>
-        <Check_Rotator_Mirror_Alphal_2>0.0895553879</Check_Rotator_Mirror_Alphal_2>
-        <Check_Rotator_Mirror_Theta_2>0.9626365493</Check_Rotator_Mirror_Theta_2>
-        <Check_Rotator_Mirror_Alphal_3>0.2748410220</Check_Rotator_Mirror_Alphal_3>
-        <Check_Rotator_Mirror_Theta_3>0.6814818722</Check_Rotator_Mirror_Theta_3>
-        <Check_Rotator_Mirror_Alphal_4>0.3097281310</Check_Rotator_Mirror_Alphal_4>
-        <Check_Rotator_Mirror_Theta_4>0.7707488639</Check_Rotator_Mirror_Theta_4>
-        <Check_Rotator_Mirror_Alphal_5>0.1282252158</Check_Rotator_Mirror_Alphal_5>
-        <Check_Rotator_Mirror_Theta_5>1.1150471648</Check_Rotator_Mirror_Theta_5>
-        <Check_GalvanometerMirror_R_theta>3.5086163261</Check_GalvanometerMirror_R_theta>
-        <Check_GalvanometerMirror_L_theta>3.5086163261</Check_GalvanometerMirror_L_theta>
+        <Check_Rotator_Mirror_Theta_1>0</Check_Rotator_Mirror_Theta_1>
+        <Check_Rotator_Mirror_Alphal_2>0</Check_Rotator_Mirror_Alphal_2>
+        <Check_Rotator_Mirror_Theta_2>0</Check_Rotator_Mirror_Theta_2>
+        <Check_Rotator_Mirror_Alphal_3>0</Check_Rotator_Mirror_Alphal_3>
+        <Check_Rotator_Mirror_Theta_3>0</Check_Rotator_Mirror_Theta_3>
+        <Check_Rotator_Mirror_Alphal_4>0</Check_Rotator_Mirror_Alphal_4>
+        <Check_Rotator_Mirror_Theta_4>0</Check_Rotator_Mirror_Theta_4>
+        <Check_Rotator_Mirror_Alphal_5>0</Check_Rotator_Mirror_Alphal_5>
+        <Check_Rotator_Mirror_Theta_5>0</Check_Rotator_Mirror_Theta_5>
+        <Check_GalvanometerMirror_R_theta>0</Check_GalvanometerMirror_R_theta>
+        <Check_GalvanometerMirror_L_theta>0</Check_GalvanometerMirror_L_theta>
     </CheckParameter>
     <CheckOffsetParameter>
-        <Check_Azimuth>-7.4279512986</Check_Azimuth>
-        <Check_RightVertical>-0.6433314505</Check_RightVertical>
-        <Check_LeftVertical>-0.6433314505</Check_LeftVertical>
+        <Check_Azimuth>-9.4</Check_Azimuth>
+        <Check_RightVertical>0</Check_RightVertical>
+        <Check_LeftVertical>0</Check_LeftVertical>
     </CheckOffsetParameter>
     <CheckAlgorithmParameter>
         <Check_Coefficient_2_Left>0.0</Check_Coefficient_2_Left>
@@ -57,7 +57,7 @@
         <Check_Min_Bound_Right>-34.61</Check_Min_Bound_Right>
     </CheckZeroRangeParameter>
     <KParameter>
-        <KData>1.0316270855</KData>
+        <KData>-1.1194119986</KData>
     </KParameter>
     <RadianTransformParameter>
         <check_a>3.5</check_a>

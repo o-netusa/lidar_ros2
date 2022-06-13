@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <LidarParameterInfo>
     <ViewFieldParameter>
-        <Interval_1_step>40</Interval_1_step>
-        <Interval_2_step>40</Interval_2_step>
-        <Interval_3_step>40</Interval_3_step>
-        <Interval_4_step>40</Interval_4_step>
+        <Interval_1_step>205</Interval_1_step>
+        <Interval_2_step>205</Interval_2_step>
+        <Interval_3_step>205</Interval_3_step>
+        <Interval_4_step>205</Interval_4_step>
         <Interval_Angle_1>-14</Interval_Angle_1>
         <Interval_Angle_2>-6.500</Interval_Angle_2>
         <Interval_Angle_3>1.000</Interval_Angle_3>
