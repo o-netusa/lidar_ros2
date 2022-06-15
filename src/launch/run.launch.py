@@ -30,7 +30,7 @@ def generate_launch_description():
             parameters=[
                 {"point_cloud_topic_name":'lidar_point_cloud'},
                 {"frame_id":'lidar'},
-                {"device_ip":'192.168.1.2'},
+                {"device_ip":'172.18.0.56'},
                 {"port":2368},
                 {"playback_file_path":""}, # leave empty if using device
                 {"auto_start":True},

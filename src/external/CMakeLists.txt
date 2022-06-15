@@ -36,7 +36,7 @@ message("==> Configuring lidardevice aarch")
 download_project(
   PROJ     lidardevice
   URL      ${CMAKE_CURRENT_SOURCE_DIR}/lidardevice/LidarDevice-1.0.0-aarch64_Linux.tar.gz
-  URL_HASH MD5=bfad1cce58e88a5b9293cf14e3370512 
+  URL_HASH MD5=749866690a24b6ff095d4c007b003bd2 
   QUIET
 )
 elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "(arm)")
