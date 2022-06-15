@@ -37,10 +37,10 @@ Parameters = [{"device_ip": "172.18.0.56”}]
 cd lidar_ros
 . ~/ros2_galactic/install/local_setup.bash
 ```
-注意home/onet改成你自己的电脑的
+
 ```
-export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/home/onet/ros2_galactic/install/rclcpp/include
-export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/home/onet/ros2_galactic/install/sensor_msgs/include
+export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:~/ros2_galactic/install/rclcpp/include
+export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:~/ros2_galactic/install/sensor_msgs/include
 colcon build
 ```
 
