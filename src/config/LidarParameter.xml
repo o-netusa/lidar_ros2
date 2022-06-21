@@ -10,11 +10,11 @@
         <Interval_Angle_3>0.000</Interval_Angle_3>
         <Interval_Angle_4>2.500</Interval_Angle_4>
         <Interval_Angle_5>5</Interval_Angle_5>
-        <FrameFrequency>3</FrameFrequency>
+        <FrameFrequency>10</FrameFrequency>
     </ViewFieldParameter>
     <LaserParameter>
-        <PowerType>1</PowerType>
-        <PowerFactorType>3</PowerFactorType>
+        <PowerType>3</PowerType>
+        <PowerFactorType>5</PowerFactorType>
         <PulseWidthType>3</PulseWidthType>
     </LaserParameter>
     <LaserEchoNumber>
@@ -27,19 +27,19 @@
         <Value>720</Value>
     </SeedDac>
     <DcThreshold>
-        <dc_q>20</dc_q>
-        <dc_i>20</dc_i>
-        <threshold>60</threshold>
+        <dc_q>25</dc_q>
+        <dc_i>25</dc_i>
+        <threshold>100</threshold>
     </DcThreshold>
     <TimeWin>
         <min>150</min>
-        <max>1920</max>
+        <max>1900</max>
     </TimeWin>
     <SourceDataType>
         <DataType>0</DataType>
     </SourceDataType>
     <GatherSize>
-        <gather_point_size>19200</gather_point_size>
+        <gather_point_size>1920</gather_point_size>
     </GatherSize>
     <AmplitudeExclude>
         <time_stamp>19200</time_stamp>
